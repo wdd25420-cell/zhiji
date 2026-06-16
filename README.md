@@ -76,7 +76,19 @@ flutter test
 flutter run
 ```
 
-## 构建
+## 下载
+
+> 以下链接指向 GitHub Releases，点击即可下载安装。
+
+| 版本 | 设备 | 大小 | 下载 |
+|------|------|------|------|
+| arm64-v8a | 主流 64 位手机（小米/华为/OPPO/vivo/三星等） | 20.7 MB | [⬇ 下载](https://github.com/YOUR_USERNAME/zhiji/releases/download/v1.0.0/app-arm64-v8a-release.apk) |
+| armeabi-v7a | 老旧 32 位手机 | 18.5 MB | [⬇ 下载](https://github.com/YOUR_USERNAME/zhiji/releases/download/v1.0.0/app-armeabi-v7a-release.apk) |
+| x86_64 | 安卓模拟器（BlueStacks 等） | 22.0 MB | [⬇ 下载](https://github.com/YOUR_USERNAME/zhiji/releases/download/v1.0.0/app-x86_64-release.apk) |
+
+> 💡 如果不确定设备类型，选 arm64-v8a 即可（覆盖 90% 的安卓手机）。
+
+## 自行构建
 
 ```bash
 # Debug APK
