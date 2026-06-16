@@ -1,0 +1,16 @@
+# Claude Code 会话文件
+.claude/plans/
+.claude/projects/
+.claude/worktrees/
+
+# 临时文件
+temp/
+PID
+
+# IDE
+.idea/
+*.iml
+
+# 系统
+.DS_Store
+Thumbs.db
