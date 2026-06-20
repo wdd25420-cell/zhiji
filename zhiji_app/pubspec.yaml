@@ -36,6 +36,7 @@ dependencies:
 
   # UI
   flutter_markdown: ^0.7.0
+  google_fonts: ^6.2.1
 
   # 文件
   file_picker: ^8.0.0

@@ -8,7 +8,16 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get light => _buildTheme(Brightness.light);
-  static ThemeData get dark => _buildTheme(Brightness.dark);
+
+  static ThemeData get dark {
+    final base = _buildTheme(Brightness.dark);
+    return base.copyWith(
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      cardTheme: base.cardTheme.copyWith(
+        color: AppColors.darkCard,
+      ),
+    );
+  }
 
   static ThemeData _buildTheme(Brightness brightness) {
     final colorScheme = ColorScheme.fromSeed(
@@ -20,6 +29,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
+      fontFamily: 'SourceHanSansCN',
 
       // 排版
       textTheme: _buildTextTheme(colorScheme),
@@ -170,7 +180,7 @@ class AppTheme {
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: colorScheme.onSurface,
-        height: 1.5,
+        height: 1.7,
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
