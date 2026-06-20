@@ -8,6 +8,7 @@ import "../../core/widgets/attachment_list.dart";
 import "../../core/widgets/voice_input_button.dart";
 import "../../core/widgets/ai_icon.dart";
 import "../../core/agent/agent_provider.dart";
+import "../../core/agent/agent_service.dart";
 import "../../core/database/app_database.dart";
 import "../../core/database/daos/common_daos.dart";
 
@@ -25,6 +26,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messages = <_ChatMessage>[];
   final _attachments = <AttachedFile>[];
   bool _loading = false;
+  String _toolStatus = "";
   String _sessionId = "";
   bool _historyLoaded = false;
 
@@ -182,23 +184,60 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final agent = await ref.read(agentServiceProvider.future);
       final history = _buildHistory();
 
-      final answer = await agent.run(
+      final stream = agent.runStream(
         question,
         history: history.isNotEmpty ? history : null,
         attachments: attachedCopy.isNotEmpty ? attachedCopy : null,
       );
 
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _messages.add(_ChatMessage(
-            role: "ai",
-            content: answer,
-          ));
-        });
-        _scrollDown();
-        // 持久化 AI 回复
-        _saveMessage("assistant", answer);
+      final aiBuffer = StringBuffer();
+      bool aiMsgAdded = false;
+
+      await for (final step in stream) {
+        if (!mounted) break;
+        switch (step.type) {
+          case AgentStepType.thinking:
+            _toolStatus = "思考中…";
+            break;
+          case AgentStepType.searching:
+            _toolStatus = "正在搜索知识库…";
+            break;
+          case AgentStepType.webSearching:
+            _toolStatus = "正在联网搜索…";
+            break;
+          case AgentStepType.analyzing:
+            _toolStatus = "正在分析结果…";
+            break;
+          case AgentStepType.writing:
+            _toolStatus = "正在写入…";
+            break;
+          case AgentStepType.responding:
+            if (!aiMsgAdded && mounted) {
+              aiMsgAdded = true;
+              setState(() {
+                _loading = false;
+                _messages.add(_ChatMessage(role: "ai", content: ""));
+              });
+            }
+            aiBuffer.write(step.contentDelta ?? "");
+            if (mounted && _messages.isNotEmpty && _messages.last.role == "ai") {
+              setState(() {
+                _messages.last.content = aiBuffer.toString();
+              });
+            }
+            break;
+          case AgentStepType.done:
+            if (aiBuffer.isNotEmpty) {
+              _saveMessage("assistant", aiBuffer.toString());
+            }
+            break;
+          case AgentStepType.error:
+            // 错误由流内 contentDelta 携带，不应重复处理
+            break;
+        }
+        if (mounted && step.type != AgentStepType.responding && step.type != AgentStepType.done) {
+          setState(() {}); // 刷新工具状态显示
+        }
       }
 
       // T12: 记录用户提问话题到记忆
@@ -210,7 +249,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           _loading = false;
           _messages.add(_ChatMessage(
             role: "ai",
-            content: "发生错误: $e",
+            content: "处理请求时出错，请稍后重试。",
           ));
         });
         _scrollDown();
@@ -267,9 +306,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             return _buildBubble(
                               cs: cs,
                               role: "ai",
-                              child: const Padding(
-                                padding: EdgeInsets.all(AppSpacing.md),
-                                child: Text("思考中…", style: TextStyle(fontStyle: FontStyle.italic)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.md),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const _BreathingDots(),
+                                    if (_toolStatus.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(_toolStatus,
+                                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                                    ],
+                                  ],
+                                ),
                               ),
                             );
                           }
@@ -471,6 +521,54 @@ class _QuickAsk extends StatelessWidget {
 
 class _ChatMessage {
   final String role;
-  final String content;
+  String content;
   _ChatMessage({required this.role, required this.content});
+}
+
+class _BreathingDots extends StatefulWidget {
+  const _BreathingDots();
+  @override
+  State<_BreathingDots> createState() => _BreathingDotsState();
+}
+
+class _BreathingDotsState extends State<_BreathingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (i) {
+        final t = (_ctrl.value + i * 0.33) % 1.0;
+        final opacity = (t <= 0.5 ? t * 2 : 2 - t * 2);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Container(
+            width: 6, height: 6,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.3 + opacity * 0.5),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      }),
+    );
+  }
 }

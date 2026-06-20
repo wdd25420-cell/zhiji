@@ -14,7 +14,50 @@ class AIService {
   // 私有方法
   // ============================================================
 
-  /// 统一的 POST 请求封装
+  /// 统一的 chat completion 请求（Agent 用）
+  ///
+  /// 支持 tool calling、多轮对话。
+  /// 返回完整响应 Map：{content, tool_calls, finish_reason}。
+  static Future<Map<String, dynamic>?> chatCompletion({
+    required List<Map<String, dynamic>> messages,
+    List<Map<String, dynamic>>? tools,
+    int maxTokens = 2000,
+    double temperature = 0.5,
+  }) async {
+    final dio = AppDio.instance;
+    final body = <String, dynamic>{
+      'model': _model,
+      'messages': messages,
+      'temperature': temperature,
+      'max_tokens': maxTokens,
+      'stream': false,
+    };
+    if (tools != null) body['tools'] = tools;
+
+    try {
+      final response = await dio.post(
+        '$_baseUrl/v1/chat/completions',
+        data: body,
+      ).timeout(const Duration(seconds: 60));
+
+      final choices = (response.data['choices'] as List);
+      if (choices.isEmpty) return null;
+      final message = choices[0]['message'] as Map<String, dynamic>;
+      return {
+        'content': message['content'] as String?,
+        'tool_calls': message['tool_calls'] as List?,
+        'finish_reason': choices[0]['finish_reason'] as String?,
+      };
+    } on DioException catch (e) {
+      debugPrint('AI chat request failed: ${e.type} ${e.message}');
+      return null;
+    } catch (e) {
+      debugPrint('AI chat error: $e');
+      return null;
+    }
+  }
+
+  /// 统一的 POST 请求封装（保持向后兼容）
   static Future<String?> _post(
     String systemPrompt,
     String userContent, {
@@ -62,6 +105,55 @@ class AIService {
   /// 截断过长内容，防止超模型上下文窗口
   static String _truncate(String content, int maxChars) =>
       content.length > maxChars ? '${content.substring(0, maxChars)}...' : content;
+
+  /// 流式聊天补全（SSE），逐 delta 输出内容
+  static Stream<String> chatCompletionStream({
+    required List<Map<String, dynamic>> messages,
+    int maxTokens = 2000,
+    double temperature = 0.5,
+  }) async* {
+    final dio = AppDio.instance;
+    final body = <String, dynamic>{
+      'model': _model,
+      'messages': messages,
+      'temperature': temperature,
+      'max_tokens': maxTokens,
+      'stream': true,
+    };
+
+    try {
+      final response = await dio.post(
+        '$_baseUrl/v1/chat/completions',
+        data: body,
+        options: Options(responseType: ResponseType.stream),
+      ).timeout(const Duration(seconds: 120));
+
+      final stream = response.data.stream as Stream<List<int>>;
+      await for (final chunk in stream) {
+        final text = utf8.decode(chunk);
+        for (final line in text.split('\n')) {
+          if (line.startsWith('data: ')) {
+            final data = line.substring(6);
+            if (data == '[DONE]') return;
+            try {
+              final json = jsonDecode(data) as Map<String, dynamic>;
+              final choices = json['choices'] as List?;
+              if (choices == null || choices.isEmpty) continue;
+              final delta = choices[0]['delta'] as Map<String, dynamic>?;
+              final content = delta?['content'] as String?;
+              if (content != null) yield content;
+            } catch (_) {}
+          }
+        }
+      }
+    } on DioException catch (e) {
+      debugPrint('AI stream request failed: ${e.type} ${e.message}');
+      yield '\n[AI 服务暂时不可用，请稍后重试]';
+    } catch (e) {
+      debugPrint('AI stream error: $e');
+      yield '\n[连接中断，请重试]';
+    }
+  }
 
   // ============================================================
   // 分析类方法
