@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
+import "package:flutter_markdown/flutter_markdown.dart";
 import "package:drift/drift.dart" hide Column;
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
@@ -327,11 +328,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             );
                           }
                           final msg = _messages[i];
+                          final isAi = msg.role == "ai";
                           return _buildBubble(
                             cs: cs,
                             role: msg.role,
-                            child: SelectableText(msg.content,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
+                            rawContent: msg.content,
+                            child: isAi
+                                ? MarkdownBody(
+                                    data: msg.content,
+                                    selectable: true,
+                                    styleSheet: MarkdownStyleSheet(
+                                      p: (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(
+                                            height: 1.7,
+                                            color: cs.onSurface,
+                                          ),
+                                      h1: Theme.of(context).textTheme.titleLarge,
+                                      h2: Theme.of(context).textTheme.titleMedium,
+                                      h3: Theme.of(context).textTheme.titleSmall,
+                                      code: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            fontFamily: 'monospace',
+                                            backgroundColor: cs.surfaceContainerHighest,
+                                          ),
+                                      codeblockDecoration: BoxDecoration(
+                                        color: cs.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      blockquoteDecoration: BoxDecoration(
+                                        border: Border(left: BorderSide(color: cs.primary, width: 4)),
+                                        color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                  )
+                                : SelectableText(msg.content,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          height: 1.6,
+                                          color: cs.onPrimary,
+                                        )),
                           );
                         },
                       ),
@@ -388,10 +420,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildBubble({required ColorScheme cs, required String role, required Widget child}) {
+  Widget _buildBubble({
+    required ColorScheme cs,
+    required String role,
+    required Widget child,
+    String rawContent = "",
+  }) {
     final isUser = role == "user";
     final bubble = Container(
-      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.75 : 0.88)),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: isUser ? cs.primary : cs.surfaceContainerHighest,
@@ -435,24 +472,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             const SizedBox(width: AppSpacing.sm),
           ],
-          Flexible(child: isUser ? bubble : GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: _getBubbleText(child)));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
-              );
-            },
+          Flexible(child: GestureDetector(
+            onLongPress: rawContent.isNotEmpty
+                ? () {
+                    Clipboard.setData(ClipboardData(text: rawContent));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
+                    );
+                  }
+                : null,
             child: bubble,
           )),
           if (isUser) ...[
             const SizedBox(width: AppSpacing.sm),
             GestureDetector(
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: _getBubbleText(child)));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
-                );
-              },
+              onLongPress: rawContent.isNotEmpty
+                  ? () {
+                      Clipboard.setData(ClipboardData(text: rawContent));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
+                      );
+                    }
+                  : null,
               child: Container(
                 width: 32, height: 32,
                 decoration: BoxDecoration(
@@ -466,13 +507,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
     );
-  }
-
-  /// 从气泡 child 中提取文本（用于复制）
-  String _getBubbleText(Widget child) {
-    if (child is SelectableText) return child.data ?? '';
-    if (child is Text) return child.data ?? '';
-    return '';
   }
 
   Widget _buildInput(ColorScheme cs) {
