@@ -380,7 +380,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ActionChip(
               avatar: const Icon(Icons.settings, size: 14),
               label: const Text("前往设置"),
-              onPressed: () => context.push('/settings'),
+              onPressed: () => context.go('/settings'),
             ),
           ],
         ),

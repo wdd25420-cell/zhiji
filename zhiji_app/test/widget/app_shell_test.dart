@@ -15,6 +15,7 @@ void main() {
       expect(find.text("日记"), findsOneWidget);
       expect(find.text("知识库"), findsOneWidget);
       expect(find.text("AI 对话"), findsOneWidget);
+      expect(find.text("设置"), findsOneWidget);
     });
 
     testWidgets("首页是默认首屏", (tester) async {

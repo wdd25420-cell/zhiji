@@ -1,16 +1,15 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 
-/// 知记应用壳 — 首页首屏 + 底部 4 Tab
+/// 知记应用壳 — 首页首屏 + 底部 5 Tab
 ///
-/// Tab 0: 首页仪表盘  Tab 1: 日记列表  Tab 2: 知识库  Tab 3: AI 对话
+/// Tab 0: 首页  Tab 1: 日记  Tab 2: 知识库  Tab 3: AI 对话  Tab 4: 设置
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   void _onTap(int index) {
-    // 同一个 Tab 不跳转；不同 Tab 切换到对应分支
     if (index != navigationShell.currentIndex) {
       navigationShell.goBranch(
         index,
@@ -46,6 +45,11 @@ class AppShell extends StatelessWidget {
             icon: Icon(Icons.smart_toy_outlined),
             selectedIcon: Icon(Icons.smart_toy),
             label: "AI 对话",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: "设置",
           ),
         ],
       ),

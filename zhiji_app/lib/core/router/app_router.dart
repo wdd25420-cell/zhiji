@@ -84,6 +84,15 @@ final appRouter = GoRouter(
             ),
           ],
         ),
+        // Tab 4: 设置
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/settings",
+              builder: (context, state) => const SettingsScreen(),
+            ),
+          ],
+        ),
       ],
     ),
 
@@ -147,13 +156,6 @@ final appRouter = GoRouter(
           child: SearchScreen(initialQuery: query),
         );
       },
-    ),
-    GoRoute(
-      path: "/settings",
-      pageBuilder: (context, state) => _slideUpPage(
-        context: context, state: state,
-        child: const SettingsScreen(),
-      ),
     ),
   ],
 
