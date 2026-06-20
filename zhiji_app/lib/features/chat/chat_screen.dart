@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:drift/drift.dart" hide Column;
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
@@ -387,6 +388,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildBubble({required ColorScheme cs, required String role, required Widget child}) {
     final isUser = role == "user";
+    final bubble = Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: isUser ? cs.primary : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(AppRadius.lg),
+          topRight: const Radius.circular(AppRadius.lg),
+          bottomLeft: isUser ? const Radius.circular(AppRadius.lg) : Radius.zero,
+          bottomRight: isUser ? Radius.zero : const Radius.circular(AppRadius.lg),
+        ),
+        boxShadow: isUser ? null : [
+          BoxShadow(
+            color: cs.shadow.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: isUser ? null : Border(
+          left: BorderSide(color: cs.primary, width: 4),
+        ),
+      ),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: isUser ? cs.onPrimary : cs.onSurface),
+        child: child,
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
@@ -404,36 +433,44 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             const SizedBox(width: AppSpacing.sm),
           ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: isUser ? cs.primaryContainer : cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(AppRadius.lg),
-                  topRight: const Radius.circular(AppRadius.lg),
-                  bottomLeft: isUser ? const Radius.circular(AppRadius.lg) : Radius.zero,
-                  bottomRight: isUser ? Radius.zero : const Radius.circular(AppRadius.lg),
-                ),
-              ),
-              child: child,
-            ),
-          ),
+          Flexible(child: isUser ? bubble : GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: _getBubbleText(child)));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
+              );
+            },
+            child: bubble,
+          )),
           if (isUser) ...[
             const SizedBox(width: AppSpacing.sm),
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color: cs.secondaryContainer,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+            GestureDetector(
+              onLongPress: () {
+                Clipboard.setData(ClipboardData(text: _getBubbleText(child)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已复制'), duration: Duration(seconds: 1)),
+                );
+              },
+              child: Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(Icons.person, size: 18, color: cs.onPrimary),
               ),
-              child: Icon(Icons.person, size: 18, color: cs.onSecondaryContainer),
             ),
           ],
         ],
       ),
     );
+  }
+
+  /// 从气泡 child 中提取文本（用于复制）
+  String _getBubbleText(Widget child) {
+    if (child is SelectableText) return child.data ?? '';
+    if (child is Text) return child.data ?? '';
+    return '';
   }
 
   Widget _buildInput(ColorScheme cs) {

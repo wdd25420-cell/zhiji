@@ -5,12 +5,20 @@ import "package:go_router/go_router.dart";
 ///
 /// 设计文档 v4.0: 用户打开即对话。右下角 FAB 弹出 BottomSheet
 /// 提供日记、知识库、首页、设置入口。
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  bool _fabOpen = false;
+
   void _showDrawer(BuildContext context) {
+    setState(() => _fabOpen = true);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -25,7 +33,6 @@ class AppShell extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 拖动指示条
                 Container(
                   width: 32,
                   height: 4,
@@ -75,17 +82,23 @@ class AppShell extends StatelessWidget {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (mounted) setState(() => _fabOpen = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showDrawer(context),
-        tooltip: "功能",
-        child: const Icon(Icons.grid_view),
+      body: widget.navigationShell,
+      floatingActionButton: AnimatedRotation(
+        turns: _fabOpen ? 0.125 : 0,
+        duration: const Duration(milliseconds: 300),
+        child: FloatingActionButton(
+          onPressed: () => _showDrawer(context),
+          tooltip: "功能",
+          child: const Icon(Icons.grid_view),
+        ),
       ),
     );
   }

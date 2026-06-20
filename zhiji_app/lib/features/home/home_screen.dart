@@ -302,78 +302,80 @@ class _StatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                icon: Icons.book_outlined,
-                label: '日记条目',
-                color: cs.primaryContainer,
-                future: db.diaryDao.countAll(),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.folder_outlined,
-                label: '知识条目',
-                color: cs.tertiaryContainer,
-                future: db.knowledgeDao.countAll(),
-              ),
-            ),
-          ],
-        ),
+        // 大主卡：连续记录天数
+        _StreakCard(db: db, cs: cs),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                icon: Icons.trending_up,
-                label: '连续记录天数',
-                color: cs.secondaryContainer,
-                future: db.diaryDao.currentStreak(),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.text_fields,
-                label: '本周字数',
-                color: cs.errorContainer,
-                future: db.diaryDao.wordCountThisWeek(),
-              ),
-            ),
-          ],
-        ),
+        // 3 小卡横排
+        Row(children: [
+          Expanded(child: _MiniStatCard(label: '日记', future: db.diaryDao.countAll(), cs: cs)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: _MiniStatCard(label: '知识', future: db.knowledgeDao.countAll(), cs: cs)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: _MiniStatCard(label: '字数', future: db.diaryDao.wordCountThisWeek(), cs: cs)),
+        ]),
       ],
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.icon, required this.label, required this.color, required this.future});
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Future<int> future;
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.db, required this.cs});
+  final AppDatabase db;
+  final ColorScheme cs;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: FutureBuilder<int>(
-        future: future,
-        builder: (ctx, snap) => Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+    return FutureBuilder<int>(
+      future: db.diaryDao.currentStreak(),
+      builder: (ctx, snap) => Card(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [cs.primary, cs.tertiary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(AppRadius.sm)),
-                  child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary)),
-              const SizedBox(height: AppSpacing.md),
+              Row(children: [
+                const Text('🔥', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: AppSpacing.sm),
+                Text('${snap.data ?? 0}',
+                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: cs.onPrimary)),
+              ]),
+              const SizedBox(height: AppSpacing.xs),
+              Text('连续记录天数', style: TextStyle(color: cs.onPrimary.withValues(alpha: 0.8))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStatCard extends StatelessWidget {
+  const _MiniStatCard({required this.label, required this.future, required this.cs});
+  final String label;
+  final Future<int> future;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int>(
+      future: future,
+      builder: (ctx, snap) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
               Text('${snap.data ?? '—'}',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: AppSpacing.xs),
               Text(label, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),

@@ -22,6 +22,7 @@ class EmotionTrendChart extends ConsumerWidget {
             return const SizedBox(height: 160, child: Center(child: Text('暂无数据')));
           }
           final bars = _buildBars(data, cs);
+          final dayLabels = _buildDayLabels();
           return SizedBox(
             height: 160,
             child: BarChart(
@@ -39,7 +40,7 @@ class EmotionTrendChart extends ConsumerWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) => Text(
-                        _dayLabels[value.toInt()],
+                        dayLabels[value.toInt()],
                         style: const TextStyle(fontSize: 11),
                       ),
                     ),
@@ -55,7 +56,13 @@ class EmotionTrendChart extends ConsumerWidget {
     );
   }
 
-  static const _dayLabels = ['前', '前', '前', '', '', '', ''];
+  static List<String> _buildDayLabels() {
+    final now = DateTime.now();
+    return List.generate(7, (i) {
+      final day = now.subtract(Duration(days: 6 - i));
+      return '${day.month}/${day.day}';
+    });
+  }
 
   List<BarChartGroupData> _buildBars(Map<String, int> data, ColorScheme cs) {
     final now = DateTime.now();
