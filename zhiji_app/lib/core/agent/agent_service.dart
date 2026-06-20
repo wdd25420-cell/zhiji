@@ -1,3 +1,4 @@
+import "dart:async";
 import "package:flutter/foundation.dart";
 import "../network/ai_api_service.dart";
 import "../utils/file_attachment_manager.dart";
@@ -174,9 +175,11 @@ class AgentService {
 
     final toolDefs = tools.toolDefs;
     var loopDetector = <String, int>{};
+    var canceled = false;
+    final timer = Timer(totalTimeout, () { canceled = true; });
 
     try {
-      for (var i = 0; i < maxIterations; i++) {
+      for (var i = 0; i < maxIterations && !canceled; i++) {
         yield const AgentStep(type: AgentStepType.thinking);
 
         final response = await AIService.chatCompletion(
@@ -218,8 +221,10 @@ class AgentService {
                 yield const AgentStep(type: AgentStepType.webSearching, toolName: "web_search");
                 break;
               case "write_diary":
-              case "save_to_knowledge":
                 yield const AgentStep(type: AgentStepType.writing, toolName: "write_diary");
+                break;
+              case "save_to_knowledge":
+                yield const AgentStep(type: AgentStepType.writing, toolName: "save_to_knowledge");
                 break;
               default:
                 yield AgentStep(type: AgentStepType.analyzing, toolName: tc.name);
@@ -251,18 +256,23 @@ class AgentService {
         if (content.isNotEmpty) {
           yield AgentStep(type: AgentStepType.responding, contentDelta: content);
         }
+        timer.cancel();
         yield const AgentStep(type: AgentStepType.done);
         return;
       }
 
-      // 循环耗尽
+      // 循环耗尽或超时
+      timer.cancel();
       yield const AgentStep(type: AgentStepType.error);
-      yield const AgentStep(
+      yield AgentStep(
         type: AgentStepType.responding,
-        contentDelta: "思考时间过长，请简化你的问题后重试。",
+        contentDelta: canceled
+            ? "思考时间过长，请简化你的问题后重试。"
+            : "思考时间过长，请简化你的问题后重试。",
       );
       yield const AgentStep(type: AgentStepType.done);
     } catch (e) {
+      timer.cancel();
       yield const AgentStep(type: AgentStepType.error);
       yield AgentStep(
         type: AgentStepType.responding,

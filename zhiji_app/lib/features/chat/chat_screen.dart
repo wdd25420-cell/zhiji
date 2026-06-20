@@ -143,6 +143,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _send(String text) async {
+    if (_loading) return; // 防止并发发送
     final question = text.trim();
     if (question.isEmpty) return;
     _controller.clear();
@@ -242,6 +243,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
 
       // T12: 记录用户提问话题到记忆
+      if (!mounted) return;
       final notifier = ref.read(agentMemoryNotifierProvider);
       await notifier.addRecentTopic(question);
     } catch (e) {
@@ -579,10 +581,16 @@ class _BreathingDotsState extends State<_BreathingDots>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat();
+    _ctrl.addListener(_onTick);
+  }
+
+  void _onTick() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _ctrl.removeListener(_onTick);
     _ctrl.dispose();
     super.dispose();
   }
