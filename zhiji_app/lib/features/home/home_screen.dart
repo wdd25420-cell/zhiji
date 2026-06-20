@@ -42,11 +42,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return const Center(child: Text('加载失败，请重试'));
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showFabMenu(context),
-        tooltip: '新建',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
@@ -118,7 +113,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // AI 智能问答入口
           Card(
             child: InkWell(
-              onTap: () => context.push('/chat'),
+              onTap: () => context.go('/chat'),
               borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
@@ -169,37 +164,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppSpacing.sm),
           _RecentCombined(db: db),
         ],
-      ),
-    );
-  }
-
-  void _showFabMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('写日记'),
-                onTap: () { Navigator.pop(ctx); context.push('/diary/new'); },
-              ),
-              ListTile(
-                leading: const Icon(Icons.post_add),
-                title: const Text('添加知识'),
-                onTap: () { Navigator.pop(ctx); context.push('/knowledge/new'); },
-              ),
-              ListTile(
-                leading: const Icon(Icons.chat_bubble_outline),
-                title: const Text('AI 问答'),
-                onTap: () { Navigator.pop(ctx); context.push('/chat'); },
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

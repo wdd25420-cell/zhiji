@@ -1,127 +1,54 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 
-/// 知记应用壳 — Agent 首屏 + 功能抽屉（FAB）
+/// 知记应用壳 — 首页首屏 + 底部 4 Tab
 ///
-/// 设计文档 v4.0: 用户打开即对话。右下角 FAB 弹出 BottomSheet
-/// 提供日记、知识库、首页、设置入口。
-class AppShell extends StatefulWidget {
+/// Tab 0: 首页仪表盘  Tab 1: 日记列表  Tab 2: 知识库  Tab 3: AI 对话
+class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  @override
-  State<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends State<AppShell> {
-  bool _fabOpen = false;
-
-  void _showDrawer(BuildContext context) {
-    setState(() => _fabOpen = true);
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final theme = Theme.of(context);
-        final cs = theme.colorScheme;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: cs.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text("功能", style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                _DrawerItem(
-                  icon: Icons.edit_note,
-                  label: "写日记",
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    context.push("/diary/new");
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.folder_outlined,
-                  label: "知识库",
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    context.push("/knowledge");
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.dashboard_outlined,
-                  label: "首页仪表盘",
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    context.push("/home");
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.settings_outlined,
-                  label: "设置",
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    context.push("/settings");
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    ).then((_) {
-      if (mounted) setState(() => _fabOpen = false);
-    });
+  void _onTap(int index) {
+    // 同一个 Tab 不跳转；不同 Tab 切换到对应分支
+    if (index != navigationShell.currentIndex) {
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: widget.navigationShell,
-      floatingActionButton: AnimatedRotation(
-        turns: _fabOpen ? 0.125 : 0,
-        duration: const Duration(milliseconds: 300),
-        child: FloatingActionButton(
-          onPressed: () => _showDrawer(context),
-          tooltip: "功能",
-          child: const Icon(Icons.grid_view),
-        ),
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: _onTap,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: "首页",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.book_outlined),
+            selectedIcon: Icon(Icons.book),
+            label: "日记",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder),
+            label: "知识库",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.smart_toy_outlined),
+            selectedIcon: Icon(Icons.smart_toy),
+            label: "AI 对话",
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      title: Text(label),
-      trailing: const Icon(Icons.chevron_right, size: 20),
-      onTap: onTap,
     );
   }
 }

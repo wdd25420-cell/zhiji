@@ -9,20 +9,27 @@ import 'package:zhiji/core/widgets/undo_manager.dart';
 
 void main() {
   group('Widget 渲染', () {
-    testWidgets('App 启动并渲染 Agent 首屏', (tester) async {
+    testWidgets('App 启动并渲染首页仪表盘', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: ZhijiApp()));
       await tester.pump();
 
-      // v4: Agent 首屏，无 NavigationBar，有 FAB
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      // 底部 4 Tab NavigationBar
+      expect(find.byType(NavigationBar), findsOneWidget);
+      // 首页标题
+      expect(find.text("知记"), findsOneWidget);
     });
 
-    testWidgets('Agent 首屏存在输入区域', (tester) async {
+    testWidgets('切换到 AI 对话 Tab 显示输入区域', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: ZhijiApp()));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
-      // Agent 对话输入框应存在（hintText: "说点什么…"）
+      // 点击 "AI 对话" Tab 切换
+      await tester.tap(find.text("AI 对话"));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Agent 对话输入框应存在
       expect(find.text('说点什么…'), findsOneWidget);
     });
   });
