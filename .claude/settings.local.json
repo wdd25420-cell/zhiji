@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "tool_name === 'Write' || tool_name === 'Edit' || (tool_name === 'Bash' && tool_input.command && tool_input.command.includes('flutter build'))",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');try{const s=JSON.parse(fs.readFileSync('.claude/ux_upgrade_state.json','utf8'));const cs=s.current_step;const steps=Object.entries(s.steps);const done=steps.filter(([k,v])=>parseInt(k)<cs&&v.status!=='completed');if(done.length>0){console.log('BLOCKED: 前置步骤未完成:'+done.map(([k,v])=>'步骤'+k+'('+v.name+') 仍为 '+v.status).join(', '));process.exit(1);}console.log('OK: 当前步骤 '+cs);}catch(e){console.log('WARN: 状态文件读取失败，放行: '+e.message);}\""
+          }
+        ]
+      }
+    ]
+  }
+}
