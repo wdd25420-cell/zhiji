@@ -5,8 +5,15 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.38.5-blue)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.10.4-blue)](https://dart.dev)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![APK](https://img.shields.io/badge/Download-APK-brightgreen)](https://github.com/wdd25420-cell/zhiji/releases)
 
 ---
+
+## 📦 下载安装
+
+> 点击下载最新版 APK：**[app-release.apk](https://github.com/wdd25420-cell/zhiji/releases/latest)**
+
+或扫描二维码安装（发布后生成）。
 
 ## 简介
 
