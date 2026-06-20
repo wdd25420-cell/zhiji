@@ -88,6 +88,7 @@ class AgentService {
     List<ToolDef> toolDefs,
   ) async {
     var loopDetector = <String, int>{};
+    final executedTools = <String>[];
 
     for (var i = 0; i < maxIterations; i++) {
       final response = await AIService.chatCompletion(
@@ -96,6 +97,16 @@ class AgentService {
       );
 
       if (response == null) {
+        if (executedTools.isNotEmpty) {
+          final toolNames = executedTools
+              .map((t) => switch (t) {
+                "write_diary" => "✅ 日记已写好",
+                "save_to_knowledge" => "✅ 知识条目已保存",
+                _ => "✅ $t 已完成",
+              })
+              .join("；");
+          return "$toolNames\n\n⚠️ AI 服务暂时不可用，无法生成进一步的回复。请稍后重试。";
+        }
         return "抱歉，AI 服务暂时不可用，请稍后重试。";
       }
 
@@ -119,6 +130,10 @@ class AgentService {
               .timeout(toolTimeout, onTimeout: () {
             return ToolResult.error(tc.id, "操作超时");
           });
+
+          if (!result.isError) {
+            executedTools.add(tc.name);
+          }
 
           messages.add({
             "role": "tool",
@@ -176,6 +191,7 @@ class AgentService {
     final toolDefs = tools.toolDefs;
     var loopDetector = <String, int>{};
     var canceled = false;
+    final executedTools = <String>[]; // 追踪已成功执行的工具
     final timer = Timer(totalTimeout, () { canceled = true; });
 
     try {
@@ -189,10 +205,25 @@ class AgentService {
 
         if (response == null) {
           yield const AgentStep(type: AgentStepType.error);
-          yield const AgentStep(
-            type: AgentStepType.responding,
-            contentDelta: "抱歉，AI 服务暂时不可用，请稍后重试。",
-          );
+          if (executedTools.isNotEmpty) {
+            // 工具已执行但后续 API 失败——告知用户已完成的操作
+            final summary = executedTools
+                .map((t) => switch (t) {
+                  "write_diary" => "✅ 日记已写好",
+                  "save_to_knowledge" => "✅ 知识条目已保存",
+                  _ => "✅ $t 已完成",
+                })
+                .join("；");
+            yield AgentStep(
+              type: AgentStepType.responding,
+              contentDelta: "$summary\n\n⚠️ AI 服务暂时不可用，无法生成进一步的回复。请稍后重试或检查网络连接。",
+            );
+          } else {
+            yield const AgentStep(
+              type: AgentStepType.responding,
+              contentDelta: "抱歉，AI 服务暂时不可用，请稍后重试。",
+            );
+          }
           yield const AgentStep(type: AgentStepType.done);
           return;
         }
@@ -235,6 +266,10 @@ class AgentService {
                 .timeout(toolTimeout, onTimeout: () {
               return ToolResult.error(tc.id, "操作超时");
             });
+
+            if (!result.isError) {
+              executedTools.add(tc.name);
+            }
 
             messages.add({
               "role": "tool",
