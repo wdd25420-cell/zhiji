@@ -1,10 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/dimensions.dart';
-import '../../core/database/app_database.dart';
-import '../../core/network/ai_api_service.dart';
+import "package:flutter/material.dart";
+import "package:drift/drift.dart" hide Column;
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:go_router/go_router.dart";
+import "../../core/theme/dimensions.dart";
+import "../../core/utils/file_attachment_manager.dart";
+import "../../core/widgets/attachment_list.dart";
+import "../../core/widgets/voice_input_button.dart";
+import "../../core/agent/agent_provider.dart";
+import "../../core/database/app_database.dart";
+import "../../core/database/daos/common_daos.dart";
 
-/// AI 智能问答屏幕 (RAG)
+/// AI Agent 对话屏幕
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
@@ -16,7 +22,82 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollCtrl = ScrollController();
   final _messages = <_ChatMessage>[];
+  final _attachments = <AttachedFile>[];
   bool _loading = false;
+  String _sessionId = "";
+  bool _historyLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    _loadHistory();
+  }
+
+  /// 从 agent_messages 表加载最近会话历史
+  Future<void> _loadHistory() async {
+    try {
+      final db = await ref.read(databaseProvider.future);
+      final rows = await db.customSelect(
+        "SELECT session_id, role, content FROM agent_messages "
+        "ORDER BY created_at DESC LIMIT 50",
+        readsFrom: {db.agentMessages},
+      ).get();
+
+      if (rows.isEmpty) return;
+      // 按时间正序（从旧到新）
+      final reversed = rows.reversed.toList();
+      // 取最后一条消息的 session_id 作为当前会话
+      final lastRow = rows.first;
+      _sessionId = lastRow.read<String>("session_id");
+
+      final loaded = <_ChatMessage>[];
+      for (final row in reversed) {
+        final sid = row.read<String>("session_id");
+        if (sid != _sessionId) continue;
+        loaded.add(_ChatMessage(
+          role: row.read<String>("role"),
+          content: row.read<String>("content"),
+        ));
+      }
+      if (mounted) {
+        setState(() {
+          _messages.addAll(loaded);
+          _historyLoaded = true;
+        });
+      }
+    } catch (_) {
+      // DB 不可用时静默降级，不影响对话功能
+    }
+  }
+
+  /// 保存单条消息到 agent_messages 表
+  Future<void> _saveMessage(String role, String content, {String? toolName}) async {
+    try {
+      final db = await ref.read(databaseProvider.future);
+      await db.customInsert(
+        "INSERT INTO agent_messages (session_id, role, content, tool_name) "
+        "VALUES (?, ?, ?, ?)",
+        variables: [
+          Variable.withString(_sessionId),
+          Variable.withString(role),
+          Variable.withString(content),
+          Variable.withString(toolName ?? ""),
+        ],
+        updates: {db.agentMessages},
+      );
+    } catch (_) {
+      // 持久化失败不阻塞对话
+    }
+  }
+
+  /// 构建多轮对话历史（不含当前 system prompt 和最新用户消息）
+  List<Map<String, dynamic>> _buildHistory() {
+    return _messages
+        .where((m) => m.role == "user" || m.role == "ai")
+        .map((m) => {"role": m.role == "ai" ? "assistant" : m.role, "content": m.content})
+        .toList();
+  }
 
   @override
   void dispose() {
@@ -25,46 +106,110 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
+  void _onVoiceText(String text) {
+    if (text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("未识别到语音，请重试")),
+      );
+      return;
+    }
+    _controller.text = text;
+    _send(text);
+  }
+
+  Future<void> _pickAttachments() async {
+    final files = await FileAttachmentManager.pickDocuments(allowMultiple: true);
+    if (files.isNotEmpty && mounted) {
+      setState(() => _attachments.addAll(files));
+    }
+  }
+
+  void _removeAttachment(int index) {
+    setState(() {
+      FileAttachmentManager.deleteFile(_attachments[index]);
+      _attachments.removeAt(index);
+    });
+  }
+
+  void _clearAttachments() {
+    for (final f in _attachments) {
+      FileAttachmentManager.deleteFile(f);
+    }
+    setState(() => _attachments.clear());
+  }
+
   Future<void> _send(String text) async {
     final question = text.trim();
     if (question.isEmpty) return;
     _controller.clear();
-    setState(() {
-      _messages.add(_ChatMessage(role: 'user', content: question));
-      _loading = true;
-    });
-    _scrollDown();
 
-    try {
-      final db = await ref.read(databaseProvider.future);
-      // FTS5 检索前5条相关上下文，每条截断到1500字防止超 token
-      final results = await db.search(question);
-      final context = results.take(5).map((r) {
-        final type = r['source_type'] as String? ?? '';
-        final title = r['title'] as String? ?? '';
-        final rawBody = r['body'] as String? ?? '';
-        final body = rawBody.length > 1500 ? '${rawBody.substring(0, 1500)}...' : rawBody;
-        return '[$type] $title\n$body';
-      }).join('\n---\n');
-
-      final answer = await AIService.askQuestion(question, context);
+    // 检测 API Key 是否已配置
+    final db = await ref.read(databaseProvider.future);
+    final key = await SettingsDao(db).getApiKey();
+    if (key == null || key.isEmpty) {
       if (mounted) {
         setState(() {
-          _loading = false;
           _messages.add(_ChatMessage(
-            role: 'ai',
-            content: answer ?? '抱歉，AI 服务暂时不可用。请检查 API Key 和网络连接。',
+            role: "ai",
+            content: "👋 欢迎使用知记！\n\n"
+                "我注意到你还没有设置 API Key。请在设置中配置 DeepSeek API Key 以启用 AI 功能。\n\n"
+                "在没有 AI 的情况下，你仍然可以：\n"
+                "• 📝 写日记 — 从功能菜单进入\n"
+                "• 📚 管理知识库 — 添加和整理你的知识\n"
+                "• 🔍 搜索 — 全文搜索你的所有内容\n"
+                "• 📊 查看仪表盘 — 写作统计和趋势\n\n"
+                "前往 **设置 → DeepSeek API Key** 完成配置。",
           ));
         });
         _scrollDown();
       }
+      return;
+    }
+
+    final attachedCopy = List<AttachedFile>.from(_attachments);
+
+    setState(() {
+      _messages.add(_ChatMessage(role: "user", content: question));
+      _loading = true;
+    });
+    _scrollDown();
+
+    // 持久化用户消息
+    _saveMessage("user", question);
+
+    try {
+      final agent = await ref.read(agentServiceProvider.future);
+      final history = _buildHistory();
+
+      final answer = await agent.run(
+        question,
+        history: history.isNotEmpty ? history : null,
+        attachments: attachedCopy.isNotEmpty ? attachedCopy : null,
+      );
+
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _messages.add(_ChatMessage(
+            role: "ai",
+            content: answer,
+          ));
+        });
+        _scrollDown();
+        // 持久化 AI 回复
+        _saveMessage("assistant", answer);
+      }
+
+      // T12: 记录用户提问话题到记忆
+      final notifier = ref.read(agentMemoryNotifierProvider);
+      await notifier.addRecentTopic(question);
     } catch (e) {
       if (mounted) {
         setState(() {
           _loading = false;
           _messages.add(_ChatMessage(
-            role: 'ai',
-            content: '发生错误: $e',
+            role: "ai",
+            content: "发生错误: $e",
           ));
         });
         _scrollDown();
@@ -89,45 +234,53 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI 问答'),
+        title: const Text("AI Agent"),
         actions: [
           if (_messages.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '清空对话',
-              onPressed: () => setState(() => _messages.clear()),
+              tooltip: "新对话",
+              onPressed: () {
+                _clearAttachments();
+                setState(() {
+                  _messages.clear();
+                  _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+                });
+              },
             ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty
+            child: _messages.isEmpty && !_historyLoaded
                 ? _buildWelcome(cs)
-                : ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    itemCount: _messages.length + (_loading ? 1 : 0),
-                    itemBuilder: (ctx, i) {
-                      if (_loading && i == _messages.length) {
-                        return _buildBubble(
-                          cs: cs,
-                          role: 'ai',
-                          child: const Padding(
-                            padding: EdgeInsets.all(AppSpacing.md),
-                            child: Text('思考中…', style: TextStyle(fontStyle: FontStyle.italic)),
-                          ),
-                        );
-                      }
-                      final msg = _messages[i];
-                      return _buildBubble(
-                        cs: cs,
-                        role: msg.role,
-                        child: SelectableText(msg.content,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
-                      );
-                    },
-                  ),
+                : _messages.isEmpty
+                    ? _buildWelcome(cs)
+                    : ListView.builder(
+                        controller: _scrollCtrl,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        itemCount: _messages.length + (_loading ? 1 : 0),
+                        itemBuilder: (ctx, i) {
+                          if (_loading && i == _messages.length) {
+                            return _buildBubble(
+                              cs: cs,
+                              role: "ai",
+                              child: const Padding(
+                                padding: EdgeInsets.all(AppSpacing.md),
+                                child: Text("思考中…", style: TextStyle(fontStyle: FontStyle.italic)),
+                              ),
+                            );
+                          }
+                          final msg = _messages[i];
+                          return _buildBubble(
+                            cs: cs,
+                            role: msg.role,
+                            child: SelectableText(msg.content,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
+                          );
+                        },
+                      ),
           ),
           _buildInput(cs),
         ],
@@ -148,13 +301,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: Center(child: Text('🤖', style: TextStyle(fontSize: 36))),
+              child: Center(child: Text("\u{1F916}", style: TextStyle(fontSize: 36))),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('AI 智能问答', style: Theme.of(context).textTheme.headlineSmall),
+            Text("知记 Agent", style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              '基于你的日记和知识库，我可以回答任何问题。\n试试问我你最近写了什么，或者某个话题的相关内容。',
+              "我是你的知识管家。\n你可以问我任何问题，我会搜索你的日记、知识库，也能联网查找。",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -163,11 +316,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                _QuickAsk(label: '最近一周的心情如何？', onTap: () => _send('最近一周的心情如何？')),
-                _QuickAsk(label: '我写了哪些主题的笔记？', onTap: () => _send('我写了哪些主题的笔记？')),
-                _QuickAsk(label: '帮我回顾本周重点', onTap: () => _send('帮我回顾本周重点')),
-                _QuickAsk(label: '推荐一些相关知识', onTap: () => _send('根据我的笔记推荐一些值得回顾的内容')),
+                _QuickAsk(label: "最近一周的心情如何？", onTap: () => _send("最近一周的心情如何？")),
+                _QuickAsk(label: "我写了哪些主题的笔记？", onTap: () => _send("我写了哪些主题的笔记？")),
+                _QuickAsk(label: "帮我回顾本周重点", onTap: () => _send("帮我回顾本周重点")),
+                _QuickAsk(label: "推荐一些相关知识", onTap: () => _send("根据我的笔记推荐一些值得回顾的内容")),
               ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            ActionChip(
+              avatar: const Icon(Icons.settings, size: 14),
+              label: const Text("前往设置"),
+              onPressed: () => context.push('/settings'),
             ),
           ],
         ),
@@ -176,7 +335,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildBubble({required ColorScheme cs, required String role, required Widget child}) {
-    final isUser = role == 'user';
+    final isUser = role == "user";
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
@@ -190,7 +349,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Center(child: Text('🤖', style: TextStyle(fontSize: 16))),
+              child: Center(child: Text("\u{1F916}", style: TextStyle(fontSize: 16))),
             ),
             const SizedBox(width: AppSpacing.sm),
           ],
@@ -228,41 +387,67 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildInput(ColorScheme cs) {
     return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.sm, AppSpacing.md),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3))),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                minLines: 1,
-                maxLines: 4,
-                textInputAction: TextInputAction.send,
-                onSubmitted: _send,
-                decoration: InputDecoration(
-                  hintText: '问点什么…',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: cs.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_attachments.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+              child: AttachmentList(
+                files: _attachments,
+                editable: true,
+                onRemove: _removeAttachment,
               ),
             ),
-            const SizedBox(width: AppSpacing.xs),
-            IconButton(
-              icon: const Icon(Icons.send),
-              color: cs.primary,
-              onPressed: _loading ? null : () => _send(_controller.text),
+          Container(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.sm, AppSpacing.md),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3))),
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.attach_file),
+                  color: cs.onSurfaceVariant,
+                  tooltip: "添加附件",
+                  onPressed: _pickAttachments,
+                ),
+                VoiceInputButton(
+                  onTextReady: _onVoiceText,
+                  size: 36,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    minLines: 1,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: _send,
+                    decoration: InputDecoration(
+                      hintText: "说点什么…",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: cs.surfaceContainerHighest,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  color: cs.primary,
+                  onPressed: _loading ? null : () => _send(_controller.text),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -284,7 +469,7 @@ class _QuickAsk extends StatelessWidget {
 }
 
 class _ChatMessage {
-  final String role; // 'user' | 'ai'
+  final String role;
   final String content;
   _ChatMessage({required this.role, required this.content});
 }

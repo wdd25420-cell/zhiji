@@ -1,9 +1,9 @@
 {
-  "current_step": 1,
+  "current_step": 2,
   "total_steps": 14,
   "started_at": "2026-06-21T00:00:00Z",
   "steps": {
-    "1": {"status": "pending", "name": "首屏冷启动友好化 + 导航修复", "started_at": null, "completed_at": null},
+    "1": {"status": "completed", "name": "首屏冷启动友好化 + 导航修复", "started_at": "2026-06-21T00:05:00Z", "completed_at": "2026-06-21T00:10:00Z"},
     "2": {"status": "pending", "name": "全局中文字体 + 色彩微调", "started_at": null, "completed_at": null},
     "3": {"status": "pending", "name": "导航 go→push 修复收尾", "started_at": null, "completed_at": null},
     "4": {"status": "pending", "name": "AI 视觉语言统一", "started_at": null, "completed_at": null},
