@@ -1,5 +1,5 @@
 {
-  "current_step": 11,
+  "current_step": 15,
   "total_steps": 14,
   "started_at": "2026-06-21T00:00:00Z",
   "steps": {
@@ -13,9 +13,9 @@
     "8": {"status": "completed", "name": "列表入场动画 + 微交互", "started_at": "2026-06-21T01:10:00Z", "completed_at": "2026-06-21T01:15:00Z"},
     "9": {"status": "completed", "name": "对话气泡重做", "started_at": "2026-06-21T01:15:00Z", "completed_at": "2026-06-21T01:20:00Z"},
     "10": {"status": "completed", "name": "统计卡片不对称布局", "started_at": "2026-06-21T01:20:00Z", "completed_at": "2026-06-21T01:25:00Z"},
-    "11": {"status": "pending", "name": "编辑器视觉层次", "started_at": null, "completed_at": null},
-    "12": {"status": "pending", "name": "写作热力图升级", "started_at": null, "completed_at": null},
+    "11": {"status": "completed", "name": "编辑器视觉层次", "started_at": "2026-06-21T01:30:00Z", "completed_at": "2026-06-21T01:35:00Z"},
+    "12": {"status": "completed", "name": "写作热力图升级", "started_at": "2026-06-21T01:35:00Z", "completed_at": "2026-06-21T01:40:00Z"},
     "13": {"status": "completed", "name": "情绪趋势图升级", "started_at": "2026-06-21T01:25:00Z", "completed_at": "2026-06-21T01:28:00Z"},
-    "14": {"status": "pending", "name": "应用锁", "started_at": null, "completed_at": null}
+    "14": {"status": "completed", "name": "应用锁", "started_at": "2026-06-21T01:40:00Z", "completed_at": "2026-06-21T01:50:00Z"}
   }
 }

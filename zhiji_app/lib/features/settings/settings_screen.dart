@@ -11,6 +11,7 @@ import '../../core/theme/dimensions.dart';
 import '../../core/database/app_database.dart';
 import '../../core/database/daos/common_daos.dart';
 import '../../core/providers/theme_provider.dart';
+import '../lock/app_lock_screen.dart';
 
 /// 设置页
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -268,6 +269,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
+          // 安全
+          const _SectionTitle('安全'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.lock_outline),
+              title: const Text('应用锁'),
+              subtitle: const Text('设置 PIN 码保护应用隐私'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () async {
+                final db = await ref.read(databaseProvider.future);
+                if (context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => AppLockScreen(db: db)),
+                  );
+                }
+              },
             ),
           ),
           const SizedBox(height: AppSpacing.xl),

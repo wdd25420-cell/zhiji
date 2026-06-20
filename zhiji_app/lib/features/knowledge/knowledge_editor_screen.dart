@@ -515,7 +515,9 @@ class _KnowledgeEditorScreenState extends ConsumerState<KnowledgeEditorScreen> {
                       ),
                 const Spacer(),
                 Text('${_bodyCtrl.text.length} 字',
-                    style: Theme.of(context).textTheme.labelSmall),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    )),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

@@ -105,7 +105,21 @@ class WritingHeatmap extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('写作热力图', style: Theme.of(context).textTheme.labelLarge),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('写作热力图 (近28天)', style: Theme.of(context).textTheme.labelLarge),
+                    // 图例
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('少', style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                      _LegendBox(color: cs.primary.withValues(alpha: 0.1)),
+                      _LegendBox(color: cs.primary.withValues(alpha: 0.35)),
+                      _LegendBox(color: cs.primary.withValues(alpha: 0.6)),
+                      _LegendBox(color: cs.primary.withValues(alpha: 1.0)),
+                      Text('多', style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                    ]),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 Expanded(
                   child: GridView.builder(
@@ -145,6 +159,20 @@ class WritingHeatmap extends ConsumerWidget {
       ),
       loading: () => const ShimmerPlaceholder(height: 100),
       error: (e, s) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _LegendBox extends StatelessWidget {
+  const _LegendBox({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 1),
+      child: Container(width: 10, height: 10, decoration: BoxDecoration(
+        color: color, borderRadius: BorderRadius.circular(1),
+      )),
     );
   }
 }
