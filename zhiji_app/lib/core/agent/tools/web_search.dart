@@ -65,55 +65,45 @@ Future<WebSearchResult> webSearch(String query, {int count = 5}) async {
 WebSearchResult _parseBing(String html, int count) {
   final items = <WebSearchItem>[];
   try {
-    // 必应搜索结果结构: <li class="b_algo"> 包含标题、摘要、URL
+    // 与 bing-cn-mcp 的 cheerio 解析逻辑完全一致
+    // 必应搜索结果: <li class="b_algo"> $('h2 a') → title/url, $('.b_caption p') → snippet
     final blocks = html.split('<li class="b_algo"');
     for (var i = 1; i < blocks.length && items.length < count; i++) {
       final block = blocks[i];
 
-      // 标题: <h2><a href="...">标题</a></h2>
-      String title = "";
-      final h2Start = block.indexOf('<h2>');
-      if (h2Start >= 0) {
-        final aStart = block.indexOf('<a', h2Start);
-        if (aStart >= 0) {
-          final aEnd = block.indexOf('</a>', aStart);
-          if (aEnd >= 0) {
-            title = _stripHtml(block.substring(aStart, aEnd));
-          }
-        }
-      }
+      // 标题 & URL: 等价于 $('h2 a')
+      final h2 = _between(block, '<h2', '</h2>');  // <h2 class="..."> 有属性
+      if (h2.isEmpty) continue;
+      final aHref = _attr(h2, 'href');
+      final aText = _stripHtml(_between(h2, '<a', '</a>'));
+      if (aText.isEmpty) continue;
 
-      // URL: <a href="..."> 中的链接
-      String url = "";
-      final urlStart = block.indexOf('href="http');
-      if (urlStart >= 0) {
-        final urlEnd = block.indexOf('"', urlStart + 6);
-        if (urlEnd >= 0) url = block.substring(urlStart + 6, urlEnd);
-      }
+      // 摘要: 等价于 $('.b_caption p').first()
+      final caption = _between(block, 'class="b_caption', '</div>');
+      final snippet = _stripHtml(_between(caption, '<p', '</p>'));
 
-      // 摘要: <p> 或 <div class="b_caption">
-      String snippet = "";
-      for (final cls in ['b_caption"', 'b_lineclamp', 'b_algoSlug']) {
-        final snip = RegExp('class="$cls[^"]*"[^>]*>(.+?)</(?:div|p)>', dotAll: true).firstMatch(block);
-        if (snip != null) {
-          snippet = _stripHtml(snip.group(1)!);
-          break;
-        }
-      }
-      // fallback: 取第一个 <p>
-      if (snippet.isEmpty) {
-        final pMatch = RegExp(r'<p[^>]*>(.+?)</p>', dotAll: true).firstMatch(block);
-        if (pMatch != null) snippet = _stripHtml(pMatch.group(1)!);
-      }
-
-      if (title.isNotEmpty) {
-        items.add(WebSearchItem(title: title, url: url, snippet: snippet));
-      }
+      items.add(WebSearchItem(title: aText, url: aHref, snippet: snippet));
     }
   } catch (e) {
     debugPrint("[bing_parse] $e");
   }
   return items.isEmpty ? const WebSearchResult(items: []) : WebSearchResult(items: items);
+}
+
+/// 提取两个标记之间的内容（不含标记自身）
+String _between(String src, String start, String end) {
+  final si = src.indexOf(start);
+  if (si < 0) return '';
+  final ei = src.indexOf(end, si + start.length);
+  if (ei < 0) return '';
+  return src.substring(si + start.length, ei);
+}
+
+/// 提取 HTML 标签的属性值
+String _attr(String src, String attr) {
+  final re = RegExp('$attr\\s*=\\s*"([^"]*)"');
+  final m = re.firstMatch(src);
+  return m?.group(1) ?? '';
 }
 
 String _stripHtml(String text) {

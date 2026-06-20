@@ -1,7 +1,9 @@
+import "dart:io";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:flutter_markdown/flutter_markdown.dart";
 import "package:drift/drift.dart" hide Column;
+import "package:path/path.dart" as p;
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 import "../../core/theme/dimensions.dart";
@@ -123,10 +125,63 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _pickAttachments() async {
-    final files = await FileAttachmentManager.pickDocuments(allowMultiple: true);
-    if (files.isNotEmpty && mounted) {
-      setState(() => _attachments.addAll(files));
-    }
+    try {
+      final files = await FileAttachmentManager.pickDocuments(allowMultiple: true);
+      if (files.isNotEmpty && mounted) {
+        setState(() => _attachments.addAll(files));
+        return;
+      }
+    } catch (_) {}
+    // 文件选择器不可用（如模拟器）→ 弹出文本输入对话框作为替代
+    if (mounted) _showTextAttachmentDialog();
+  }
+
+  void _showTextAttachmentDialog() {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('添加文本附件'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            hintText: '在此粘贴或输入文本内容…\n（模拟器可能不支持文件选择，可用此方式替代）',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              try {
+                final dir = await FileAttachmentManager.attachmentsDir;
+                final stamp = DateTime.now().microsecondsSinceEpoch;
+                final path = p.join('text_note_$stamp.txt');
+                final file = File(p.join(dir.path, path));
+                await file.writeAsString(text);
+                setState(() => _attachments.add(AttachedFile(
+                  name: '文本附件_$stamp.txt',
+                  storedPath: path,
+                  sizeBytes: text.length,
+                  mimeType: 'text/plain',
+                )));
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('保存文本附件失败')),
+                  );
+                }
+              }
+            },
+            child: const Text('添加'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _removeAttachment(int index) {
