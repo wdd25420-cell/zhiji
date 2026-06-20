@@ -7,6 +7,7 @@ import '../../core/database/app_database.dart';
 import '../../core/database/daos/common_daos.dart';
 import '../../core/utils/file_attachment_manager.dart';
 import '../../core/widgets/attachment_list.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 
 /// 知识详情
 class KnowledgeDetailScreen extends ConsumerStatefulWidget {
@@ -66,7 +67,7 @@ class _KnowledgeDetailScreenState extends ConsumerState<KnowledgeDetailScreen> {
     if (_entry == null) {
       return Scaffold(
           appBar: AppBar(title: const Text('知识详情')),
-          body: const Center(child: CircularProgressIndicator()));
+          body: const ShimmerPlaceholder(height: 200));
     }
 
     final e = _entry!;

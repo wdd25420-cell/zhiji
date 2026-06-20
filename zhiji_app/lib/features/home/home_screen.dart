@@ -6,6 +6,7 @@ import '../../core/database/app_database.dart';
 import '../../core/network/ai_api_service.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/ai_icon.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 import 'widgets/emotion_trend_chart.dart';
 
 /// 首页仪表盘
@@ -35,7 +36,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: dbAsync.when(
         data: (db) => _buildContent(db, cs),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const ShimmerPlaceholder(height: 200),
         error: (e, _) {
           debugPrint('HomeScreen 加载失败: $e');
           return const Center(child: Text('加载失败，请重试'));
@@ -277,7 +278,7 @@ class _WeeklyReviewSheetState extends ConsumerState<_WeeklyReviewSheet> {
             const Divider(height: AppSpacing.xl),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const ShimmerPlaceholder(height: 160)
                   : SingleChildScrollView(
                       controller: scrollCtrl,
                       child: Text(_review ?? '', style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.7)),
@@ -436,7 +437,7 @@ class _HeatmapSection extends ConsumerWidget {
           );
         },
       ),
-      loading: () => const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
+      loading: () => const ShimmerPlaceholder(height: 100),
       error: (_, stack) => const SizedBox.shrink(),
     );
   }

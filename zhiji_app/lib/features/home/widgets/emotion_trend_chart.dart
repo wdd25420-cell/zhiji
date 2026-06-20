@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/widgets/shimmer_placeholder.dart';
 
 /// 最近7天日记条数的柱状图，标注每天的主导情绪 emoji
 class EmotionTrendChart extends ConsumerWidget {
@@ -49,7 +50,7 @@ class EmotionTrendChart extends ConsumerWidget {
           );
         },
       ),
-      loading: () => const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+      loading: () => const ShimmerPlaceholder(height: 160),
       error: (e, s) => const SizedBox.shrink(),
     );
   }
@@ -135,7 +136,7 @@ class WritingHeatmap extends ConsumerWidget {
           );
         },
       ),
-      loading: () => const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
+      loading: () => const ShimmerPlaceholder(height: 100),
       error: (e, s) => const SizedBox.shrink(),
     );
   }

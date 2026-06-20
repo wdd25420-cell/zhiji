@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/dimensions.dart';
 import '../../core/database/app_database.dart';
 import '../../core/database/daos/common_daos.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 
 /// 全文搜索
 class SearchScreen extends ConsumerStatefulWidget {
@@ -155,7 +156,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           Expanded(
             child: _searching
-          ? const Center(child: CircularProgressIndicator())
+          ? const ShimmerPlaceholder(height: 200)
           : _results.isNotEmpty
               ? ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.lg),

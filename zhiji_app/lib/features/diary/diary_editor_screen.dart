@@ -13,6 +13,7 @@ import '../../core/utils/file_importer.dart';
 import '../../core/utils/file_attachment_manager.dart';
 import '../../core/widgets/attachment_list.dart';
 import '../../core/widgets/ai_icon.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 import '../../core/network/ai_api_service.dart';
 import '../../core/agent/agent_provider.dart';
 import '../../core/utils/editor_ai_actions.dart';
@@ -441,7 +442,7 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
           TextButton(
             onPressed: _isSaving ? null : _save,
             child: _isSaving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const ShimmerPlaceholder(width: 20, height: 20, borderRadius: 4)
                 : Text('保存', style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -501,9 +502,7 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 _isAiAction
-                    ? const SizedBox(
-                        width: 24, height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const ShimmerPlaceholder(width: 24, height: 24, borderRadius: 4)
                     : PopupMenuButton<String>(
                         icon: Icon(Icons.auto_awesome, size: 20, color: cs.primary),
                         tooltip: 'AI 工具',

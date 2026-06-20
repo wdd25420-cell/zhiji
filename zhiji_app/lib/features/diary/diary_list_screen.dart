@@ -6,6 +6,7 @@ import '../../core/theme/dimensions.dart';
 import '../../core/database/app_database.dart';
 import '../../core/database/daos/common_daos.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 import 'widgets/diary_card.dart';
 
 /// 日记列表
@@ -217,7 +218,7 @@ class _DiaryListScreenState extends ConsumerState<DiaryListScreen> {
       ),
       body: dbAsync.when(
         data: (db) => _buildList(db),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const ShimmerPlaceholder(height: 200),
         error: (e, _) {
           debugPrint('DiaryList 加载失败: $e');
           return const Center(child: Text('加载失败，请重试'));

@@ -4,24 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zhiji/main.dart';
 import 'package:zhiji/core/widgets/empty_state.dart';
 import 'package:zhiji/core/widgets/loading_indicator.dart';
+import 'package:zhiji/core/widgets/shimmer_placeholder.dart';
 import 'package:zhiji/core/widgets/undo_manager.dart';
 
 void main() {
   group('Widget 渲染', () {
-    testWidgets('App 启动并渲染 4 Tab 导航栏', (tester) async {
+    testWidgets('App 启动并渲染 Agent 首屏', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: ZhijiApp()));
       await tester.pump();
 
-      // 4 个 Tab 应存在
-      expect(find.byType(NavigationBar), findsOneWidget);
+      // v4: Agent 首屏，无 NavigationBar，有 FAB
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
     });
 
-    testWidgets('首页搜索入口存在', (tester) async {
+    testWidgets('Agent 首屏存在输入区域', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: ZhijiApp()));
       await tester.pump();
 
-      // 首页至少有一个搜索图标
-      expect(find.byIcon(Icons.search), findsWidgets);
+      // Agent 对话输入框应存在（hintText: "说点什么…"）
+      expect(find.text('说点什么…'), findsOneWidget);
     });
   });
 
@@ -62,7 +64,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(
         home: Scaffold(body: LoadingIndicator()),
       ));
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(ShimmerPlaceholder), findsOneWidget);
     });
   });
 
@@ -71,7 +73,7 @@ void main() {
       final um = UndoManager();
       um.push('v1', const TextSelection.collapsed(offset: 2));
       um.push('v2', const TextSelection.collapsed(offset: 2));
-      expect(um.canUndo, isTrue); // 需要 ≥2 次 push 才能撤销
+      expect(um.canUndo, isTrue);
     });
 
     test('初始状态 canUndo 为 false', () {
@@ -104,7 +106,7 @@ void main() {
       um.push('same', const TextSelection.collapsed(offset: 4));
       um.push('same', const TextSelection.collapsed(offset: 4));
       um.undo();
-      expect(um.canUndo, isFalse); // 去重后只有 1 条，undo 后就没了
+      expect(um.canUndo, isFalse);
     });
 
     test('clear 清空历史', () {

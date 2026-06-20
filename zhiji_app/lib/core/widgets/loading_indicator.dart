@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/dimensions.dart';
+import 'shimmer_placeholder.dart';
 
 /// 加载指示器
 class LoadingIndicator extends StatelessWidget {
@@ -12,7 +13,7 @@ class LoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const ShimmerPlaceholder(height: 40, width: 40, borderRadius: 20),
           if (message != null) ...[
             const SizedBox(height: AppSpacing.lg),
             Text(message!, style: Theme.of(context).textTheme.bodyMedium),

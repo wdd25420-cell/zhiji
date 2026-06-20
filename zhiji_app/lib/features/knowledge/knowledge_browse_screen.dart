@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/dimensions.dart';
 import '../../core/database/app_database.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/shimmer_placeholder.dart';
 import 'widgets/knowledge_card.dart';
 import 'widgets/category_filter_chips.dart';
 
@@ -124,7 +125,7 @@ class _KnowledgeBrowseScreenState extends ConsumerState<KnowledgeBrowseScreen> {
       ),
       body: dbAsync.when(
         data: (db) => _buildContent(db),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const ShimmerPlaceholder(height: 200),
         error: (e, _) {
           debugPrint('KnowledgeBrowse 加载失败: $e');
           return const Center(child: Text('加载失败，请重试'));
