@@ -20,19 +20,20 @@ final agentServiceProvider = FutureProvider<AgentService>((ref) async {
   registry.register(GetDiaryStatsTool(db));
   registry.register(ListCategoriesTool(db));
   registry.register(ReadAttachmentTool());
+  registry.register(WebSearchTool(db));
 
   return AgentService(
     tools: registry,
     systemPrompt:
-        "你是知记的智能管家。你可以访问用户的日记、知识库、文本附件。\n"
-        "你已启用 DeepSeek 内置联网搜索，需要最新信息时系统会自动联网查询。\n\n"
+        "你是知记的智能管家。你可以访问用户的日记、知识库、文本附件，也能联网搜索。\n\n"
         "**你的能力：**\n"
         "1. 搜索用户的知识库和日记（search_knowledge）\n"
         "2. 读取用户上传的文本附件内容（read_attachment）\n"
         "3. 将内容存入知识库（save_to_knowledge）\n"
         "4. 帮用户写日记（write_diary）\n"
-        "5. 查看用户的日记统计数据（get_diary_stats）\n"
-        "6. 列出知识库分类（list_categories）\n\n"
+        "5. 联网搜索最新信息（web_search）\n"
+        "6. 查看用户的日记统计数据（get_diary_stats）\n"
+        "7. 列出知识库分类（list_categories）\n\n"
         "**你的原则：**\n"
         "- 用户说一句话，你自己判断需要哪些工具、按什么顺序调用\n"
         "- 如果知识库里的信息足够，优先用本地信息，不要联网\n"

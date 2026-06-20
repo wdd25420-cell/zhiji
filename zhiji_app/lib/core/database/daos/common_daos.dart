@@ -67,6 +67,13 @@ class SettingsDao {
   Future<void> deleteApiKey() async =>
       _secureStorage.delete(key: 'api_key');
 
+  Future<void> setBingKey(String value) async {
+    await _secureStorage.write(key: 'bing_key', value: value);
+  }
+
+  Future<String?> getBingKey() async =>
+      _secureStorage.read(key: 'bing_key');
+
   Future<String?> getValue(String key) async {
     final row = await (_db.select(_db.settingsTable)
           ..where((t) => t.key.equals(key)))

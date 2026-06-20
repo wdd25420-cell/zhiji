@@ -7,6 +7,7 @@ import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart' show applyWorkar
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'daos/diary_dao.dart';
 import 'daos/knowledge_dao.dart';
+import 'retry_on_lock.dart';
 
 part 'app_database.g.dart';
 
@@ -62,6 +63,15 @@ class KnowledgeTags extends Table {
   Set<Column> get primaryKey => {knowledgeEntryId, tagId};
 }
 
+class AgentMessages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get sessionId => text().withLength(min: 1, max: 100)();
+  TextColumn get role => text().withLength(min: 1, max: 20)();
+  TextColumn get content => text()();
+  TextColumn get toolName => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 class SettingsTable extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
@@ -77,6 +87,7 @@ class SettingsTable extends Table {
     CategoryModels,
     DiaryTags,
     KnowledgeTags,
+    AgentMessages,
     SettingsTable,
   ],
   daos: [DiaryDao, KnowledgeDao],
@@ -85,12 +96,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
+          await customStatement('PRAGMA journal_mode=WAL');
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(agentMessages);
+          }
         },
         onCreate: (m) async {
           await m.createAll();
@@ -152,6 +169,11 @@ class AppDatabase extends _$AppDatabase {
           );
         },
       );
+
+  /// 带锁重试保护的写入操作。
+  /// 用于 Agent 多轮同时写 agent_messages 等并发场景。
+  Future<T> runWithRetry<T>(Future<T> Function() operation) =>
+      retryOnLock(operation);
 
   // FTS5 全文搜索
   Future<List<Map<String, Object?>>> search(String query) async {

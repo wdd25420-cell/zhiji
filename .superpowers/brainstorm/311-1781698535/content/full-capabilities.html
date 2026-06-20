@@ -1,0 +1,132 @@
+<h2>Agent 完整能力范围 & 轻度主动推送</h2>
+<p class="subtitle">Agent 能处理本地文件 + 完全操控 App 全部功能 + 每日定时推送</p>
+
+<div class="section">
+  <h3>一、Agent 本地文件处理能力</h3>
+  <p>用户从系统分享/文件管理器把文件交给 Agent，Agent 自动识别、解析、入库。</p>
+  <div class="mockup">
+    <div class="mockup-header">文件处理流程</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="background:#E0F2F1">
+          <td style="padding:6px;border-radius:4px;width:25%"><strong>📄 TXT / MD</strong></td>
+          <td style="padding:6px;width:35%">直接读取，AI 自动分类 + 标签 + 摘要</td>
+          <td style="padding:6px;width:40%;font-size:11px;color:#666">👤「把这篇笔记导入知识库」<br>🤖 已导入为📚「XXX」，分类🤖AI</td>
+        </tr>
+        <tr>
+          <td style="padding:6px;border-radius:4px"><strong>📑 PDF</strong></td>
+          <td style="padding:6px">提取文本，AI 分段总结要点</td>
+          <td style="padding:6px;font-size:11px;color:#666">👤「帮我读这个PDF，总结要点」<br>🤖 该PDF共12页，核心论点：...</td>
+        </tr>
+        <tr style="background:#E0F2F1">
+          <td style="padding:6px;border-radius:4px"><strong>📊 Word / Excel</strong></td>
+          <td style="padding:6px">提取文字/表格，结构化存入</td>
+          <td style="padding:6px;font-size:11px;color:#666">👤「把这个Excel里的数据整理成笔记」</td>
+        </tr>
+        <tr>
+          <td style="padding:6px;border-radius:4px"><strong>🖼️ 图片 (OCR)</strong></td>
+          <td style="padding:6px">拍照/截图 → OCR识别 → 存为笔记</td>
+          <td style="padding:6px;font-size:11px;color:#666">👤 拍白板 →「把白板内容转成笔记」</td>
+        </tr>
+        <tr style="background:#E0F2F1">
+          <td style="padding:6px;border-radius:4px"><strong>🗜️ ZIP 压缩包</strong></td>
+          <td style="padding:6px">解压 → 逐个文件处理 → 批量导入</td>
+          <td style="padding:6px;font-size:11px;color:#666">👤「这个压缩包里的文件全部导入」</td>
+        </tr>
+        <tr>
+          <td style="padding:6px;border-radius:4px"><strong>🔗 网页链接</strong></td>
+          <td style="padding:6px">抓取网页 → 提取正文 → 存为知识</td>
+          <td style="padding:6px;font-size:11px;color:#666">👤「把这个链接存下来并总结」</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>二、Agent 完全操控 App</h3>
+  <p>所有 App 功能对 Agent 开放。用户不需要知道功能在哪里，只需要说出来。</p>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Agent 能做的事（示例）</div>
+      <div class="mockup-body" style="font-size:12px;line-height:1.7">
+        ✅ 创建/编辑/删除日记<br>
+        ✅ 创建/编辑/删除知识<br>
+        ✅ 添加/删除标签<br>
+        ✅ 管理分类<br>
+        ✅ 全文搜索<br>
+        ✅ 情绪统计 & 趋势分析<br>
+        ✅ 写作热力图<br>
+        ✅ AI 续写/润色/总结<br>
+        ✅ 批量操作（删除/导出）<br>
+        ✅ 添加/查看附件<br>
+        ✅ 切换深色模式<br>
+        ✅ 配置 API Key<br>
+        ✅ 导入/导出数据<br>
+        ✅ 清空数据（需二次确认）<br>
+        ✅ 查看隐私政策<br>
+        ✅ 语音输入转文字
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">自然语言操控示例</div>
+      <div class="mockup-body" style="font-size:12px;line-height:1.7">
+        <div style="background:#E8EAF6;padding:5px 8px;margin:3px 0;border-radius:6px">👤「切到深色模式」<br>🤖 已切换 🌓</div>
+        <div style="background:#E8EAF6;padding:5px 8px;margin:3px 0;border-radius:6px">👤「把日记全部导出发给我」<br>🤖 导出文件已生成 📄</div>
+        <div style="background:#E8EAF6;padding:5px 8px;margin:3px 0;border-radius:6px">👤「给API Key换成sk-xxx」<br>🤖 API Key 已更新 ✅</div>
+        <div style="background:#E8EAF6;padding:5px 8px;margin:3px 0;border-radius:6px">👤「删除所有测试分类的笔记」<br>🤖 ⚠️ 将删除3条笔记，确认吗？<br>👤「确认」<br>🤖 已删除 ✅</div>
+        <div style="background:#E8EAF6;padding:5px 8px;margin:3px 0;border-radius:6px">👤「帮我把这段话润色一下」<br>🤖 润色结果：...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>三、轻度主动推送（每日一次）</h3>
+  <div class="mockup">
+    <div class="mockup-header">每日定时推送（用户可配置时间，默认 20:00）</div>
+    <div class="mockup-body">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="background:#FFF3E0">
+          <td style="padding:8px;border-radius:6px;width:32px;text-align:center">📊</td>
+          <td style="padding:8px"><strong>今日回顾</strong><br><small>今天写了 2 篇日记，1 篇知识。情绪以 😊 开心为主。点击查看详情 →</small></td>
+        </tr>
+        <tr>
+          <td style="padding:8px;text-align:center">📚</td>
+          <td style="padding:8px"><strong>待复习提醒</strong><br><small>有 3 篇笔记超过 30 天未复习。点击查看 →</small></td>
+        </tr>
+        <tr style="background:#FFF3E0">
+          <td style="padding:8px;text-align:center">💡</td>
+          <td style="padding:8px"><strong>知识发现</strong><br><small>发现「React状态管理」和「Riverpod原理」内容高度相关，要合并整理吗？</small></td>
+        </tr>
+        <tr>
+          <td style="padding:8px;text-align:center">🔗</td>
+          <td style="padding:8px"><strong>关联推荐</strong><br><small>你最近在读的「系统设计」和 3 个月前收藏的文章主题一致。</small></td>
+        </tr>
+      </table>
+      <p style="font-size:11px;color:#666;margin-top:8px;text-align:center">推送时间可在设置中调整 | 可关闭不想收到的推送类型 | 点击通知直接进入 Agent 对话</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>四、每日推送技术实现</h3>
+  <p style="font-size:13px">Android WorkManager 定时任务 → 后台触发 Agent 分析 → 生成本地通知。全程离线，数据不出设备。</p>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:12px;font-family:monospace;line-height:1.5">
+      20:00  WorkManager 触发<br>
+        ↓<br>
+      Agent.analyze() 本地执行：<br>
+        ├─ countByDay()     → 今日写作统计<br>
+        ├─ getStaleNotes()  → 30天+未复习笔记<br>
+        ├─ findRelations()  → 新关联发现<br>
+        └─ countByEmotion() → 情绪数据<br>
+        ↓<br>
+      flutter_local_notifications 推送<br>
+        ↓<br>
+      用户点击通知 → 打开 App → Agent 对话页<br>
+        ↓<br>
+      Agent 基于推送内容展开：「今天过得怎么样？我看到...」
+    </div>
+  </div>
+</div>

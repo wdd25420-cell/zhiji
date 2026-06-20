@@ -1,0 +1,74 @@
+<h2>Agent-First 设计：对话即应用</h2>
+<p class="subtitle">Agent 成为主界面，覆盖 90% 用户需求。传统页面退居二线——当用户需要直接操作时可通过 Agent 跳转或手动进入。</p>
+
+<div class="section">
+  <h3>新导航模型：Agent 为首页</h3>
+  <div class="mockup">
+    <div class="mockup-header">底部导航重塑</div>
+    <div class="mockup-body">
+      <table style="width:100%;text-align:center;font-size:13px;border-collapse:collapse">
+        <tr>
+          <td style="background:#E0F2F1;border:2px solid #00897B;padding:10px;border-radius:8px;width:25%"><strong>🤖 知记</strong><br><small>Agent 对话（默认首页）</small></td>
+          <td style="padding:8px;width:25%;color:#999"><strong>📔 日记</strong><br><small>按需进入</small></td>
+          <td style="padding:8px;width:25%;color:#999"><strong>📚 知识库</strong><br><small>按需进入</small></td>
+          <td style="padding:8px;width:25%;color:#999"><strong>⚙️ 设置</strong><br><small>按需进入</small></td>
+        </tr>
+      </table>
+      <p style="font-size:12px;color:#666;margin-top:8px">传统 Tab 保留但弱化——用户大部分时间在 Agent 对话中完成操作。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Agent 覆盖的功能全景</h3>
+  <p>以下所有操作，用户只需<strong>说话</strong>即可完成：</p>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">📔 日记操作（对话完成）</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 今天心情不错，学了 Flutter</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 已为你创建日记 📔<br>情绪：😊 开心 | 标签：#Flutter #学习</div>
+      <div style="border-top:1px dashed #ccc;margin:6px 0"></div>
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 帮我把昨天那篇日记改成难过</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 已将「今天心情不错」情绪改为 😢 难过</div>
+      <div style="border-top:1px dashed #ccc;margin:6px 0"></div>
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 这周都写了什么？</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 本周共 5 篇日记：<br>周一：😊 开心 · 周二：🤔 反思 · 周三：😰 焦虑 · 周四：😌 平静 · 今天：😊 开心<br><small style="color:#00897B">📄 点击查看详情</small></div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">📚 知识操作（对话完成）</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 帮我记一下：RAG 的核心三步骤是检索、增强、生成</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 已创建知识 📚「RAG核心三步骤」<br>分类：🤖 AI & 机器学习</div>
+      <div style="border-top:1px dashed #ccc;margin:6px 0"></div>
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 我之前写过关于 Transformer 的内容吗？</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 找到 2 篇相关内容：<br>📚「Transformer架构详解」(3月前)<br>📚「Attention机制笔记」(上周)<br><small style="color:#00897B">📄 点击查看</small></div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">🔍 搜索 & 分析（对话完成）</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 搜一下我写过的所有关于 Python 的内容</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 搜索到 6 条结果：<br>📚 Python异步编程笔记<br>📚 Django ORM 总结<br>📔 今天用Python写了个爬虫<br>...<br><small style="color:#00897B">共 6 条，点击展开全部</small></div>
+      <div style="border-top:1px dashed #ccc;margin:6px 0"></div>
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 我最近一个月情绪怎么样？</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 近30天情绪分析：<br>😊 开心 12天 ████████░░<br>😌 平静 7天  █████░░░░░<br>😰 焦虑 5天  ███░░░░░░░<br>📈 整体趋势：偏积极 ↑</div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">🔗 智能关联 & 推荐（对话完成）</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 有什么值得我复习的吗？</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 推荐 3 篇待复习：<br>📚「设计模式笔记」(45天未看)<br>📚「Kubernetes入门」(30天未看)<br>📔 上个月的反思日记<br><small>💡 它们和你最近学的系统架构相关</small></div>
+      <div style="border-top:1px dashed #ccc;margin:6px 0"></div>
+      <div style="background:#E8EAF6;padding:6px 10px;margin:4px 0;border-radius:8px">👤 把最近一个月关于AI的笔记总结成一篇</div>
+      <div style="background:#E0F2F1;padding:6px 10px;margin:4px 0;border-radius:8px">🤖 <span style="background:#B2DFDB;padding:1px 4px;border-radius:4px;font-size:10px">🔍</span> 搜索中...<br><span style="background:#B2DFDB;padding:1px 4px;border-radius:4px;font-size:10px">✏️</span> 生成摘要...<br>✅ 已创建「AI学习月度总结」，整合了8篇笔记要点</div>
+    </div>
+  </div>
+</div>

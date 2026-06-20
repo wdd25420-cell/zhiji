@@ -1,0 +1,129 @@
+<h2>ChatScreen — Agent 对话主界面设计</h2>
+<p class="subtitle">这是 App 打开后的默认首页，用户 90% 时间在这里与 Agent 交互</p>
+
+<div class="section">
+  <h3>整体布局</h3>
+  <div class="mockup">
+    <div class="mockup-header">ChatScreen 线框图（320×640 手机比例）</div>
+    <div class="mockup-body">
+      <div style="width:320px;margin:0 auto;border:1px solid #ccc;border-radius:16px;overflow:hidden;font-size:12px">
+        <!-- Status Bar -->
+        <div style="background:#00897B;color:white;padding:4px 12px;display:flex;justify-content:space-between;font-size:10px">
+          <span>9:41</span><span>🔋 📶</span>
+        </div>
+        <!-- AppBar -->
+        <div style="background:#00897B;color:white;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:28px;height:28px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">🤖</div>
+            <div><strong style="font-size:14px">知记</strong><br><small style="font-size:10px;opacity:0.8">AI 助手 · 在线</small></div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;font-size:10px">📅 回顾</span>
+            <span style="font-size:14px">⋯</span>
+          </div>
+        </div>
+        <!-- Chat Area -->
+        <div style="background:#FAFAFC;padding:8px;min-height:400px;display:flex;flex-direction:column;gap:6px">
+          <!-- 系统欢迎区（首次或无对话时显示） -->
+          <div style="text-align:center;padding:16px 8px">
+            <div style="width:48px;height:48px;background:#E0F2F1;border-radius:16px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
+            <strong style="font-size:14px">你好，我是知记</strong>
+            <p style="color:#666;font-size:11px;margin:4px 0">我可以帮你写日记、记知识、搜笔记、分析情绪。<br>试试对我说：</p>
+          </div>
+          <!-- 快捷提问气泡 -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
+            <span style="background:#E0F2F1;padding:4px 10px;border-radius:12px;font-size:10px;border:1px solid #B2DFDB">📔 今天学了什么新东西？</span>
+            <span style="background:#E0F2F1;padding:4px 10px;border-radius:12px;font-size:10px;border:1px solid #B2DFDB">📚 快速记一条笔记</span>
+            <span style="background:#E0F2F1;padding:4px 10px;border-radius:12px;font-size:10px;border:1px solid #B2DFDB">🔍 搜索我的笔记</span>
+            <span style="background:#E0F2F1;padding:4px 10px;border-radius:12px;font-size:10px;border:1px solid #B2DFDB">📊 最近心情怎么样？</span>
+          </div>
+          <!-- 对话气泡示例 -->
+          <div style="display:flex;justify-content:flex-end;margin:4px 0">
+            <div style="background:#00897B;color:white;padding:6px 10px;border-radius:12px 12px 2px 12px;max-width:80%;font-size:11px">帮我记一下今天开会的内容，主题是Q2规划</div>
+          </div>
+          <!-- Agent 回复 + 工具执行过程 -->
+          <div style="display:flex;gap:6px;margin:4px 0">
+            <div style="width:24px;height:24px;background:#E0F2F1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🤖</div>
+            <div>
+              <!-- 工具调用卡片 -->
+              <div style="background:#FFF3E0;padding:6px 10px;border-radius:10px;border-left:3px solid #BF6A02;margin-bottom:4px;font-size:10px;display:flex;align-items:center;gap:4px">
+                <span style="font-size:12px">🔧</span> <code style="background:#FFE0B2;padding:1px 4px;border-radius:3px">create_note</code>
+                <span style="color:#666">→ 已创建</span>
+              </div>
+              <!-- Agent 文字回复 -->
+              <div style="background:#E8E8EC;padding:6px 10px;border-radius:2px 12px 12px 12px;max-width:90%;font-size:11px;line-height:1.5">
+                已创建日记 📔<strong>「Q2规划会议记录」</strong><br>
+                情绪：🤔 反思 · 标签：<span style="background:#E0F2F1;padding:1px 4px;border-radius:4px">#会议</span> <span style="background:#E0F2F1;padding:1px 4px;border-radius:4px">#规划</span><br>
+                <span style="color:#00897B;font-size:10px">📄 查看日记 →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Input Bar -->
+        <div style="border-top:1px solid #eee;padding:6px 8px;display:flex;align-items:flex-end;gap:6px;background:white">
+          <span style="font-size:16px;padding:4px">🎤</span>
+          <span style="font-size:16px;padding:4px">📎</span>
+          <div style="flex:1;background:#F3F3F7;border-radius:16px;padding:6px 12px;font-size:11px;color:#999">说点什么...</div>
+          <span style="font-size:16px;padding:4px;color:#00897B">⬆️</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>关键 UI 组件说明</h3>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">🛠️ 工具调用状态指示器</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <p>Agent 执行工具时，在气泡下方显示步骤状态：</p>
+      <div style="background:#FFF3E0;padding:6px 10px;border-radius:8px;border-left:3px solid #FF9800;margin:4px 0;font-size:11px">
+        🔄 <strong>执行中</strong><br>search_notes → 搜索"AI相关内容"...
+      </div>
+      <div style="background:#E8F5E9;padding:6px 10px;border-radius:8px;border-left:3px solid #4CAF50;margin:4px 0;font-size:11px">
+        ✅ <strong>已完成</strong><br>create_note → 创建「AI学习总结」
+      </div>
+      <div style="background:#FFEBEE;padding:6px 10px;border-radius:8px;border-left:3px solid #F44336;margin:4px 0;font-size:11px">
+        ❌ <strong>失败</strong><br>delete_note → 笔记不存在，可能已被删除
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">💬 对话快捷操作</div>
+    <div class="mockup-body" style="font-size:12px;line-height:1.6">
+      <p>每条 Agent 回复底部有快捷操作按钮：</p>
+      <table style="width:100%;font-size:11px">
+        <tr><td style="padding:3px">📄 查看</td><td style="color:#666">打开创建的笔记详情</td></tr>
+        <tr><td style="padding:3px">📝 存为日记</td><td style="color:#666">将对话保存为日记条目</td></tr>
+        <tr><td style="padding:3px">📋 复制</td><td style="color:#666">复制回复内容</td></tr>
+        <tr><td style="padding:3px">👍👎</td><td style="color:#666">反馈（优化未来回复）</td></tr>
+        <tr><td style="padding:3px">♻️ 重试</td><td style="color:#666">不满意可以重新生成</td></tr>
+      </table>
+      <p style="font-size:11px;color:#666;margin-top:8px;border-top:1px dashed #ccc;padding-top:6px">输入框左侧：🎤 语音输入 · 📎 附件/文件 · 🏷️ 快捷指令</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>确认弹窗（写操作安全检查）</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="font-size:12px">
+      <div style="width:280px;margin:0 auto;border:1px solid #ccc;border-radius:16px;padding:16px;background:white">
+        <div style="text-align:center;font-size:28px;margin-bottom:8px">⚠️</div>
+        <strong style="font-size:14px">确认删除操作</strong>
+        <p style="color:#666;font-size:11px;margin:8px 0">Agent 请求删除以下内容：</p>
+        <div style="background:#FFF3E0;padding:8px;border-radius:8px;font-size:11px;margin:8px 0">
+          3 篇日记（标签：测试、临时）<br>
+          <small style="color:#999">操作不可撤销</small>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;padding:8px;border:1px solid #ccc;border-radius:8px;background:white;font-size:12px">取消</button>
+          <button style="flex:1;padding:8px;border:none;border-radius:8px;background:#BA1A1A;color:white;font-size:12px">确认删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

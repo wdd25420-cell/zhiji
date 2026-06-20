@@ -149,3 +149,32 @@ dev_dependencies:
 - [ ] 所有新增代码匹配原设计 Token（用 ColorScheme 而非硬编码）
 - [ ] 手动走通核心用户流程
 - [ ] 代码改动量合理（不应出现千行级的无关重构）
+
+
+---
+
+# 附录：v4 Agent 首屏实施（2026-06-17 ~ 2026-06-21）
+
+> 以下为 v4 实际实施内容，基于上述原始计划的架构升级
+
+## v4 核心变更
+
+| 项 | 原计划 | v4 实际 |
+|----|--------|---------|
+| 首屏 | HomeScreen 仪表盘 | ChatScreen Agent 对话 |
+| 导航 | 4-Tab 底部栏 | FAB → BottomSheet 功能抽屉 |
+| AI | RAG 问答 + 编辑器 AI | ReAct Agent 自主调用 7 工具 |
+| 路由 | StatefulShellRoute 4 分支 | StatefulShellRoute 1 分支 (仅 Agent) |
+| APK | 三包 20.7/18.5/22.0MB | 单包 58.8MB |
+
+## v4 新增实施步骤
+
+| # | 任务 | 产出 | 验证 |
+|---|------|------|------|
+| V4.1 | 创建 Agent 核心：agent_service (ReAct 循环 5 轮 + 3 层超时), agent_provider (Riverpod), agent_memory (10 主题追踪), tool.dart (基类 + ToolRegistry) | `lib/core/agent/` | 手动对话测试 |
+| V4.2 | 实现 7 个 Agent 工具：search_knowledge, save_to_knowledge, write_diary, get_diary_stats, list_categories, read_attachment, web_search | `lib/core/agent/tools/` | 各工具单元测试 |
+| V4.3 | 升级路由：app_router 改为单分支 StatefulShellRoute, AppShell 改为 FAB→BottomSheet | `lib/core/router/` + `lib/core/widgets/app_shell.dart` | 首屏对话 + 底部抽屉入口 |
+| V4.4 | chat_screen 升级：ReAct 循环调用, 会话历史持久化 (agent_messages 表), 附件上下文传递 | `lib/features/chat/chat_screen.dart` | 多轮对话 + 重启恢复 |
+| V4.5 | 数据库升级：新增 agent_messages 表 (schema v2), retryOnLock 并发写入保护 | `lib/core/database/` | migration 测试 |
+| V4.6 | Agent 测试套件：agent_service_test, agent_messages_test, agent_memory_test, tool_error_test, web_search_test 等 | `test/` | `flutter test` 19 文件 |
+| V4.7 | 修复多轮对话角色映射 bug：_buildHistory 中 `ai` → `assistant` | `features/chat/chat_screen.dart:96` | 连续对话不报错 |

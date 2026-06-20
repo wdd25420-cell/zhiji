@@ -1,6 +1,6 @@
 # 知记 (Zhiji) — 项目开发总览
 
-> 从零到交付的完整记录 | 2026-06-17 | 版本 v3.1
+> 从零到交付的完整记录 | 2026-06-21 | 版本 v4.0
 
 ---
 
@@ -9,11 +9,11 @@
 | 属性 | 值 |
 |------|-----|
 | 项目名称 | 知记 (Zhiji) |
-| 项目定位 | AI 原生个人知识管理 Android 应用 |
+| 项目定位 | AI Agent 驱动的个人知识管理 Android 应用 |
 | 技术栈 | Flutter 3.38.5 · Dart 3.10.4 · Riverpod 2.6.1 · drift 2.28.2 · GoRouter 14.8.0 · MD3 |
-| 目标平台 | Android APK（Release 三包：20.7MB / 18.5MB / 22.0MB） |
+| 目标平台 | Android APK（Release 单包 58.8MB） |
 | 开发环境 | Windows 11 24H2 · JBR JDK 21 · Android SDK 36 |
-| 代码规模 | 40 个 Dart 源文件 · 7 个测试文件 · 67 个测试 |
+| 代码规模 | 45 个 Dart 源文件 · 19 个测试文件 |
 | 依赖项 | 34 个包（含 speech_to_text, fl_chart, image_picker, open_filex, permission_handler 等） |
 
 ---
@@ -23,7 +23,7 @@
 ### 阶段概览
 
 ```
-时间线：2026-06-16 ~ 2026-06-17（约 28 小时实际开发）
+时间线：2026-06-16 ~ 2026-06-21（约 40 小时实际开发）
 ```
 
 | 阶段 | 内容 | 文件 | 测试 |
@@ -52,6 +52,11 @@
 | **V3 阶段 5** | 优化修复：dropdown deprecation, RAG/AI 截断, 权限引导, 转场动画, 隐私政策 | 4 | 67 |
 | **V3 阶段 6** | 测试补充：11 Widget 测试 + 3 集成测试 | — | 67 |
 | **V3 阶段 7** | 上线前修复：草稿保护 (外部 Activity 前保存/恢复), 知识编辑器 PopScope, _hasChanges 补全, 构建签名路径修复 | 3 | 67 |
+| **V4 阶段 0** | Agent 核心：agent_service (ReAct 循环), agent_provider (7 工具注册), tool.dart (基类), agent_memory (主题追踪) | 5 | — |
+| **V4 阶段 1** | 7 个工具实现：search_knowledge, save_to_knowledge, write_diary, get_diary_stats, list_categories, read_attachment, web_search | 3 | — |
+| **V4 阶段 2** | 架构升级：AppShell FAB→BottomSheet, app_router StatefulShellRoute (仅 Agent 分支), chat_screen 会话持久化 | 4 | — |
+| **V4 阶段 3** | Agent 测试：agent_service_test, agent_messages_test, agent_memory_test, tool_error_test, web_search_test, ai_service_regression_test, attachment_test, agent_search_test 等 | — | 19 文件 |
+| **V4 阶段 4** | 修复：_buildHistory 角色映射 bug (ai→assistant), APK 单包重构建 58.8MB | 1 | — |
 
 ---
 
@@ -60,11 +65,11 @@
 ### 3.1 完整目录树
 
 ```
-lib/ (40 files)
+lib/ (45 files)
 ├── main.dart 
 ├── core/
 │   ├── theme/                         # app_theme, color_tokens, dimensions
-│   ├── router/app_router.dart         # GoRouter + CustomTransitionPage (fade+slide)
+│   ├── router/app_router.dart         # GoRouter (StatefulShellRoute Agent 首屏) + CustomTransitionPage (fade+slide)
 │   ├── providers/theme_provider.dart  # ThemeMode StateNotifier
 │   ├── database/                      # app_database (7表+FTS5+6触发器) + daos (diary/knowledge/common)
 │   ├── widgets/                       # AppShell, EmptyState, TagChip, VoiceInputButton, MarkdownToolbar, AttachmentList, UndoManager, LoadingIndicator
@@ -107,6 +112,7 @@ lib/ (40 files)
 | `category_models` | id, name(UNIQUE), icon, sortOrder | 6 个预设分类 |
 | `diary_tags` | diaryEntryId(FK CASCADE), tagId(FK CASCADE) | 多对多 |
 | `knowledge_tags` | knowledgeEntryId(FK CASCADE), tagId(FK CASCADE) | 多对多 |
+| gent_messages | id, sessionId, role, content, toolName, createdAt | Agent 会话历史（并发写入 retryOnLock） |
 | `settings_table` | key(PK), value | 键值对（含 diary_draft, knowledge_draft, search_history, theme_mode） |
 | `search_index` | FTS5 虚拟表 | 全文索引（6 触发器自动同步） |
 
@@ -125,17 +131,17 @@ lib/ (40 files)
 
 | 路径 | 屏幕 | Tab 内 | 转场 |
 |------|------|--------|------|
-| `/` | HomeScreen | ✅ 首页 | Tab 切换 |
-| `/diary` | DiaryListScreen | ✅ 日记 | Tab 切换 |
-| `/knowledge` | KnowledgeBrowseScreen | ✅ 知识库 | Tab 切换 |
-| `/settings` | SettingsScreen | ✅ 设置 | Tab 切换 |
+| `/` | ChatScreen (Agent 对话) | ✅ 首屏 | — |
+| `/diary` | DiaryListScreen | ❌ | fade+slide 250ms |
+| `/knowledge` | KnowledgeBrowseScreen | ❌ | fade+slide 250ms |
+| `/settings` | SettingsScreen | ❌ | fade+slide 250ms |
 | `/diary/new` | DiaryEditorScreen (新建) | ❌ | fade+slide 250ms |
 | `/diary/:id` | DiaryEditorScreen (编辑) | ❌ | fade+slide 250ms |
 | `/knowledge/new` | KnowledgeEditorScreen (新建) | ❌ | fade+slide 250ms |
 | `/knowledge/:id` | KnowledgeDetailScreen | ❌ | fade+slide 250ms |
 | `/knowledge/:id/edit` | KnowledgeEditorScreen (编辑) | ❌ | fade+slide 250ms |
 | `/search` | SearchScreen | ❌ | fade+slide 250ms |
-| `/chat` | ChatScreen (AI 问答) | ❌ | fade+slide 250ms |
+| `/chat` | ChatScreen (独立) | ❌ | fade+slide 250ms |
 
 ---
 
@@ -156,7 +162,8 @@ lib/ (40 files)
 | 知识关联推荐 | ✅ | `listRelatedByTags` 共同标签查询 |
 | 知识批量删除 | ✅ | 长按进选择模式 + 全选 |
 | FTS5 全文搜索 | ✅ | 6 SQLite 触发器自动同步 |
-| 搜索历史持久化 | ✅ | `settings_table` JSON 存储 |
+| 搜索历史持久化 | ✅ | gent_messages | id, sessionId, role, content, toolName, createdAt | Agent 会话历史（并发写入 retryOnLock） |
+| `settings_table` JSON 存储 |
 | 搜索结果高亮 | ✅ | RichText 红色加粗匹配词 |
 | 搜索结果计数 | ✅ | "共找到 X 条" |
 | 首页仪表盘 | ✅ | 4 统计卡 + BarChart 趋势 + 热力图 |
@@ -178,7 +185,11 @@ lib/ (40 files)
 | 清空数据保留设置 | ✅ | `settingsTable` + FTS5 不删 |
 | API Key 管理 | ✅ | FlutterSecureStorage + 保存即生效 |
 | 隐私政策 | ✅ | 7 章节完整内容 BottomSheet |
-| 全局错误兜底 | ✅ | PlatformDispatcher.onError |
+| Agent ReAct 对话 (5 轮迭代 + 工具自主调用) | ✅ | gent_service.dart ReAct 循环 |
+| Agent 7 工具集 | ✅ | search_knowledge/save_to_knowledge/write_diary/get_diary_stats/list_categories/read_attachment/web_search |
+| Agent 记忆 (10 主题追踪) | ✅ | gent_memory.dart → SystemPrompt 注入 |
+| Agent 会话持久化 | ✅ | gent_messages 表 + SQLite Lock Retry |
+| Agent 附件上下文传递 | ✅ | AttachedFile → ReadAttachmentTool || 全局错误兜底 | ✅ | PlatformDispatcher.onError |
 | 应用图标 | ✅ | `flutter_launcher_icons` 青绿底 |
 | Release 签名 | ✅ | keystore.jks |
 | R8/ProGuard | ✅ | `isMinifyEnabled=true` + 序列化保护 |
@@ -200,7 +211,7 @@ lib/ (40 files)
 | 上线前全流程审计 | `APP_REAUDIT_REPORT.md` | P0:2, P1:8, P2:6 | 全部修复 |
 | 构建前审查 | 本次会话 | 知识编辑器缺 PopScope, _hasChanges 不完整 | 全部修复 |
 
-### 7.2 测试覆盖
+### 7.2 测试覆盖 (v4)
 
 | 测试文件 | 测试数 | 覆盖内容 |
 |----------|--------|---------|
@@ -240,7 +251,7 @@ $env:FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
 flutter build apk --debug
 
 # Release APK（正式分发，分包）
-flutter build apk --release --split-per-abi
+flutter build apk --release
 ```
 
 ### 8.3 常用开发命令
@@ -275,11 +286,11 @@ dart run build_runner build --delete-conflicting-outputs  # 代码生成
 
 | 文件 | 大小 | 说明 |
 |------|------|------|
-| `app-arm64-v8a-release.apk` | 20.7 MB | ARM64 设备（90% 手机） |
-| `app-armeabi-v7a-release.apk` | 18.5 MB | 老旧 32 位设备 |
-| `app-x86_64-release.apk` | 22.0 MB | BlueStacks / 模拟器 |
-| `keystore/zhiji.jks` | — | 签名密钥 |
+| \pp-release.apk\ | 58.8 MB | Release 单包（通用） |
+| \keystore/zhiji.jks\ | — | 签名密钥 |
 
 ---
 
-*文档版本 v3.1 · 2026-06-17 · 基于对 40 个 Dart 源文件、7 个测试文件的完整梳理*
+*文档版本 v4.0 · 2026-06-21 · 基于对 45 个 Dart 源文件、19 个测试文件的完整梳理*
+
+

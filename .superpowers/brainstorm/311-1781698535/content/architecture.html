@@ -1,0 +1,78 @@
+<h2>知记 AI 智能体 — 总体架构与交互流程</h2>
+<p class="subtitle">方案A：客户端编排（Flutter内实现 Agent Loop）</p>
+
+<div class="section">
+  <h3>架构总览</h3>
+  <div class="mockup">
+    <div class="mockup-header">知记 AI Agent 架构</div>
+    <div class="mockup-body">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;font-family:monospace">
+        <tr><td style="border:2px solid #00897B;padding:8px;border-radius:6px;background:#E0F2F1;text-align:center" colspan="3"><strong>📱 Flutter App（设备端）</strong></td></tr>
+        <tr><td style="border:1px solid #ccc;padding:6px;width:33%;vertical-align:top;border-radius:4px">
+          <strong>🧩 ChatScreen UI</strong><br>
+          <small>聊天气泡 + 工具状态指示器<br>+ 快捷提问 + 操作确认弹窗</small>
+        </td>
+        <td style="border:1px solid #ccc;padding:6px;width:33%;vertical-align:top;border-radius:4px">
+          <strong>🎛️ Dashboard Agent Panel</strong><br>
+          <small>后台 Agent 状态卡片<br>洞察通知 + 定期报告入口</small>
+        </td>
+        <td style="border:1px solid #ccc;padding:6px;width:33%;vertical-align:top;border-radius:4px">
+          <strong>🔔 Notification Layer</strong><br>
+          <small>本地通知："你今天有3篇笔记待复习"<br>"发现2条知识关联"</small>
+        </td></tr>
+        <tr><td style="border:2px solid #4A6FA5;padding:8px;border-radius:6px;background:#E8EAF6;text-align:center" colspan="3"><strong>🧠 Agent Loop（dart_agent_core + DeepSeek Function Calling）</strong></td></tr>
+        <tr><td style="border:1px dashed #ccc;padding:4px;text-align:center">ReAct 循环：Think → Decide → Act → Observe</td>
+        <td style="border:1px dashed #ccc;padding:4px;text-align:center">Plan Mode：先规划步骤，再逐步执行</td>
+        <td style="border:1px dashed #ccc;padding:4px;text-align:center">Memory：会话记忆 + 对话摘要持久化</td></tr>
+        <tr><td style="border:2px solid #BF6A02;padding:8px;border-radius:6px;background:#FFF3E0;text-align:center" colspan="3"><strong>🔧 Agent Tools（调用现有 DAO）</strong></td></tr>
+        <tr><td style="border:1px solid #ccc;padding:4px;text-align:center;font-size:12px">
+          🔍 search_notes<br>📝 create_note<br>✏️ update_note<br>🗑️ delete_note</td>
+        <td style="border:1px solid #ccc;padding:4px;text-align:center;font-size:12px">
+          📊 get_stats<br>📈 analyze_emotions<br>🏷️ manage_tags<br>🔗 get_related</td>
+        <td style="border:1px solid #ccc;padding:4px;text-align:center;font-size:12px">
+          🌐 web_search(可选)<br>📋 list_by_date<br>📄 export_note<br>⏰ schedule_task</td>
+        </tr>
+        <tr><td style="border:2px solid #BA1A1A;padding:8px;border-radius:6px;background:#FFEBEE;text-align:center" colspan="3"><strong>☁️ DeepSeek API（仅 LLM 推理走网络）</strong></td></tr>
+        <tr><td style="text-align:center;font-size:12px;padding:4px" colspan="3">所有数据在设备本地 | HTTPS 加密传输 | API Key Android Keystore 存储</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>核心交互：聊天式 Agent 对话</h3>
+  <p>用户说出需求 → Agent 自主规划步骤 → 调用工具 → 呈现结果。用户在气泡中可以看到每一步执行过程。</p>
+  <div class="mockup">
+    <div class="mockup-header">对话示例：Agent 多步操作</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.6">
+      <div style="background:#E8EAF6;padding:8px 12px;margin:6px 0;border-radius:12px 12px 12px 2px;max-width:80%">
+        <strong>👤 用户</strong><br>帮我找出上周所有关于AI的笔记，把它们总结成一页新知识
+      </div>
+      <div style="background:#E0F2F1;padding:8px 12px;margin:6px 0;border-radius:2px 12px 12px 12px;max-width:85%;margin-left:auto">
+        <strong>🤖 知记</strong><br>
+        <span style="background:#B2DFDB;padding:1px 6px;border-radius:8px;font-size:11px">🔍 搜索中...</span><br>
+        正在搜索上周的AI相关笔记...
+      </div>
+      <div style="background:#FFF3E0;padding:6px 10px;margin:4px 40px;border-radius:8px;font-size:12px;border-left:3px solid #BF6A02">
+        🛠️ <code>search_notes</code> → 找到 4 条结果
+      </div>
+      <div style="background:#E0F2F1;padding:8px 12px;margin:6px 0;border-radius:2px 12px 12px 12px;max-width:85%;margin-left:auto">
+        <strong>🤖 知记</strong><br>
+        <span style="background:#B2DFDB;padding:1px 6px;border-radius:8px;font-size:11px">📝 创建中...</span><br>
+        已找到4篇相关笔记，正在为你生成综合总结...
+      </div>
+      <div style="background:#FFF3E0;padding:6px 10px;margin:4px 40px;border-radius:8px;font-size:12px;border-left:3px solid #BF6A02">
+        🛠️ <code>create_note</code> → 已创建「AI学习周报」
+      </div>
+      <div style="background:#E0F2F1;padding:8px 12px;margin:6px 0;border-radius:2px 12px 12px 12px;max-width:85%;margin-left:auto">
+        <strong>🤖 知记</strong><br>
+        已创建新知识笔记 <strong>「AI学习周报」</strong>，包含以下4篇的要点总结：<br>
+        1. Transformer架构笔记<br>
+        2. RAG实现原理<br>
+        3. DeepSeek API使用记录<br>
+        4. Prompt Engineering技巧<br><br>
+        <button style="background:#00897B;color:white;border:none;padding:4px 12px;border-radius:6px;font-size:12px">📄 查看新笔记</button>
+      </div>
+    </div>
+  </div>
+</div>

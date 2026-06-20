@@ -34,9 +34,9 @@ void main() {
             "2. 读取用户上传的文本附件内容（read_attachment）\n"
             "3. 将内容存入知识库（save_to_knowledge）\n"
             "4. 帮用户写日记（write_diary）\n"
-            "5. 查看用户的日记统计数据（get_diary_stats）\n"
-            "6. 列出知识库分类（list_categories）\n"
-            "联网搜索由 DeepSeek 内置处理，无需工具调用。\n\n"
+            "5. 联网搜索最新信息（web_search）\n"
+            "6. 查看用户的日记统计数据（get_diary_stats）\n"
+            "7. 列出知识库分类（list_categories）\n\n"
             "**你的原则：**\n"
             "- 用户说一句话，你自己判断需要哪些工具、按什么顺序调用\n"
             "- 如果知识库里的信息足够，优先用本地信息，不要联网\n"
@@ -79,6 +79,7 @@ void main() {
       const validTools = {
         "search_knowledge", "save_to_knowledge", "write_diary",
         "get_diary_stats", "list_categories", "read_attachment",
+        "web_search",
       };
       for (final c in evalCases) {
         if (c.expectedTool != null) {

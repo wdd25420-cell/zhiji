@@ -348,3 +348,86 @@ const presetCategories = [
 | `KnowledgeEditorScreen` | [`screens/knowledge-editor.html`](C:\Users\Administrator\AppData\Roaming\Open Design\namespaces\release-stable-win\data\projects\55a9b35d-3459-41a4-87e8-fc905e72b094\screens\knowledge-editor.html) | form-group, form-input, form-select, form-textarea, upload-zone, ai-toggle, tag-editor | 标题/来源/分类/正文表单、文件上传、标签编辑 |
 | `SearchScreen` | [`screens/search.html`](C:\Users\Administrator\AppData\Roaming\Open Design\namespaces\release-stable-win\data\projects\55a9b35d-3459-41a4-87e8-fc905e72b094\screens\search.html) | search-box, filter-row, result-item, search-history | 实时搜索、类型筛选、高亮、搜索历史 |
 | `SettingsScreen` | [`screens/settings.html`](C:\Users\Administrator\AppData\Roaming\Open Design\namespaces\release-stable-win\data\projects\55a9b35d-3459-41a4-87e8-fc905e72b094\screens\settings.html) | settings-group, settings-card, settings-item, switch, btn-danger | API Key、缓存管理、数据导入导出 |
+
+## 八、v4 Agent 首屏架构
+
+### 8.1 导航模型变更
+
+v4 版从 4-Tab 底部导航栏改为 Agent 首屏 + 功能抽屉：
+
+```
+┌─────────────────────────┐
+│     Agent 对话界面       │  ← 首屏、唯一 Shell 分支
+│                         │
+│  [消息列表]             │
+│  [输入框]               │
+│                         │
+│              ┌───────┐  │
+│              │  FAB  │  │  ← 功能入口
+│              └───┬───┘  │
+│                  │       │
+│     BottomSheet 抽屉     │
+│  ┌──────────────────┐   │
+│  │ · 写日记          │   │
+│  │ · 知识库          │   │
+│  │ · 首页仪表盘      │   │
+│  │ · 设置            │   │
+│  └──────────────────┘   │
+└─────────────────────────┘
+```
+
+路由实现：`StatefulShellRoute.indexedStack`，仅一个分支 `/` → `ChatScreen`。其余页面作为全屏路由，从 BottomSheet 通过 `context.go()` 跳转。
+
+### 8.2 Agent ReAct 循环
+
+```
+用户输入
+  ↓
+构建 messages：[system, ...history, user]
+  ↓
+┌─→ AIService.chatCompletion(messages, tools) ──→ 获取响应
+│   ↓
+│  有 tool_calls？
+│   ├── 是 → 逐个执行工具（45s 超时/个）
+│   │        将 tool result 追加到 messages
+│   │        循环计数器 + 重复检测
+│   │        继续下一轮迭代（最多 5 轮）
+│   │
+│   └── 否 → 返回 content 文本
+│
+│  总超时 120s
+│  5 轮后用尽 → 强制总结
+└──────────────────┘
+```
+
+### 8.3 工具注册
+
+工具统一注册在 `agent_provider.dart`：
+
+```dart
+final registry = ToolRegistry();
+registry.register(SearchKnowledgeTool(db));   // FTS5 搜索
+registry.register(SaveToKnowledgeTool(db));   // 写入知识库
+registry.register(WriteDiaryTool(db));        // 写入日记
+registry.register(GetDiaryStatsTool(db));     // 日记统计
+registry.register(ListCategoriesTool(db));    // 分类列表
+registry.register(ReadAttachmentTool());      // 读取附件
+registry.register(WebSearchTool(db));         // Bing 联网
+```
+
+### 8.4 Agent 记忆系统
+
+`AgentMemory` 追踪最近 10 个对话主题，注入 system prompt 片段提供上下文。用户每次提问后调用 `addRecentTopic()` 更新。
+
+### 8.5 会话持久化
+
+`agent_messages` 表（drift）：
+- `session_id`：会话标识
+- `role`：user / assistant / tool
+- `content`：消息正文
+- `tool_name`：工具名（可选）
+
+启动时加载最近 50 条消息恢复会话。写入时使用 `retryOnLock` 处理并发。
+
+---
+

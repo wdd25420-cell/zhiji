@@ -31,10 +31,11 @@ void main() {
       expect(AgentService.maxIterations, 5);
     });
 
-    test("6 个工具全部注册（联网搜索由 DeepSeek 内置处理）", () {
+    test("7 个工具全部注册", () {
       for (final name in [
         "search_knowledge", "save_to_knowledge", "write_diary",
         "get_diary_stats", "list_categories", "read_attachment",
+        "web_search",
       ]) {
         expect(registry.get(name), isNotNull, reason: "工具 $name 未注册");
       }
