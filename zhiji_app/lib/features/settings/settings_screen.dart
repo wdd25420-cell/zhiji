@@ -247,21 +247,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('深色模式'),
-                  subtitle: Text(
-                    switch (ref.watch(themeModeProvider)) {
-                      ThemeMode.dark => '深色',
-                      ThemeMode.light => '浅色',
-                      _ => '跟随系统',
-                    },
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
                   leading: const Icon(Icons.dark_mode_outlined),
-                  onTap: () {
-                    final modes = [ThemeMode.system, ThemeMode.light, ThemeMode.dark];
-                    final current = modes.indexOf(ref.read(themeModeProvider));
-                    final next = (current + 1) % 3;
-                    ref.read(themeModeProvider.notifier).set(modes[next]);
-                  },
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: SegmentedButton<ThemeMode>(
+                      segments: const [
+                        ButtonSegment(value: ThemeMode.system, label: Text('系统'), icon: Icon(Icons.settings_suggest)),
+                        ButtonSegment(value: ThemeMode.light, label: Text('浅色'), icon: Icon(Icons.light_mode)),
+                        ButtonSegment(value: ThemeMode.dark, label: Text('深色'), icon: Icon(Icons.dark_mode)),
+                      ],
+                      selected: {ref.watch(themeModeProvider)},
+                      onSelectionChanged: (modes) {
+                        ref.read(themeModeProvider.notifier).set(modes.first);
+                      },
+                      style: const ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
