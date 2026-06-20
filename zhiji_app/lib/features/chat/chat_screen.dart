@@ -6,6 +6,7 @@ import "../../core/theme/dimensions.dart";
 import "../../core/utils/file_attachment_manager.dart";
 import "../../core/widgets/attachment_list.dart";
 import "../../core/widgets/voice_input_button.dart";
+import "../../core/widgets/ai_icon.dart";
 import "../../core/agent/agent_provider.dart";
 import "../../core/database/app_database.dart";
 import "../../core/database/daos/common_daos.dart";
@@ -301,7 +302,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: Center(child: Text("\u{1F916}", style: TextStyle(fontSize: 36))),
+              child: const AiIcon(size: 36),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text("知记 Agent", style: Theme.of(context).textTheme.headlineSmall),
@@ -349,7 +350,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Center(child: Text("\u{1F916}", style: TextStyle(fontSize: 16))),
+              child: const AiIcon(size: 16, withBackground: false),
             ),
             const SizedBox(width: AppSpacing.sm),
           ],

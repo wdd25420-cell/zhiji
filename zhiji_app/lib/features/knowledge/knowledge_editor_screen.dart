@@ -10,9 +10,12 @@ import '../../core/widgets/voice_input_button.dart';
 import '../../core/utils/file_importer.dart';
 import '../../core/utils/file_attachment_manager.dart';
 import '../../core/widgets/attachment_list.dart';
+import '../../core/widgets/ai_icon.dart';
 import '../../core/widgets/markdown_toolbar.dart';
 import '../../core/widgets/undo_manager.dart';
 import '../../core/network/ai_api_service.dart';
+import '../../core/agent/agent_provider.dart';
+import '../../core/utils/editor_ai_actions.dart';
 
 /// 知识编辑器
 class KnowledgeEditorScreen extends ConsumerStatefulWidget {
@@ -258,10 +261,11 @@ class _KnowledgeEditorScreenState extends ConsumerState<KnowledgeEditorScreen> {
     final sel = _bodyCtrl.selection;
     final selectedText = sel.isValid && sel.start != sel.end ? body.substring(sel.start, sel.end) : '';
     try {
+      final agent = await ref.read(agentServiceProvider.future);
       String? result;
       switch (action) {
         case '续写':
-          result = await AIService.continueWriting(body);
+          result = await EditorAiActions.continueWriting(agent, body);
           if (result != null && mounted) {
             _bodyCtrl.text = '$body\n$result';
             _bodyCtrl.selection = TextSelection.collapsed(offset: _bodyCtrl.text.length);
@@ -275,7 +279,7 @@ class _KnowledgeEditorScreenState extends ConsumerState<KnowledgeEditorScreen> {
             setState(() => _isAiAction = false);
             return;
           }
-          result = await AIService.polish(selectedText);
+          result = await EditorAiActions.polish(agent, selectedText);
           if (result != null && mounted) {
             _bodyCtrl.text = body.replaceRange(sel.start, sel.end, result);
             _bodyCtrl.selection = TextSelection.collapsed(offset: sel.start + result.length);
@@ -283,7 +287,7 @@ class _KnowledgeEditorScreenState extends ConsumerState<KnowledgeEditorScreen> {
           break;
         case '总结':
           final text = selectedText.isEmpty ? body : selectedText;
-          result = await AIService.summarize(text);
+          result = await EditorAiActions.summarize(agent, text);
           if (result != null && mounted) {
             final prefix = body.isEmpty ? '' : '\n\n## AI 总结\n$result';
             _bodyCtrl.text = '$body$prefix';
@@ -564,7 +568,7 @@ class _KnowledgeEditorScreenState extends ConsumerState<KnowledgeEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      const Text('🤖', style: TextStyle(fontSize: 20)),
+                      const AiIcon(size: 20),
                       const SizedBox(width: AppSpacing.sm),
                       Text('DeepSeek AI 分析', style: Theme.of(context).textTheme.titleSmall),
                     ]),

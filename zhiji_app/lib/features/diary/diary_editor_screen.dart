@@ -12,7 +12,10 @@ import '../../core/widgets/undo_manager.dart';
 import '../../core/utils/file_importer.dart';
 import '../../core/utils/file_attachment_manager.dart';
 import '../../core/widgets/attachment_list.dart';
+import '../../core/widgets/ai_icon.dart';
 import '../../core/network/ai_api_service.dart';
+import '../../core/agent/agent_provider.dart';
+import '../../core/utils/editor_ai_actions.dart';
 import 'widgets/emotion_selector.dart';
 
 /// 日记编辑器（新建 + 编辑）
@@ -275,10 +278,11 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
         ? body.substring(sel.start, sel.end)
         : '';
     try {
+      final agent = await ref.read(agentServiceProvider.future);
       String? result;
       switch (action) {
         case '续写':
-          result = await AIService.continueWriting(body);
+          result = await EditorAiActions.continueWriting(agent, body);
           if (result != null && mounted) {
             // 续写追加到末尾
             _bodyCtrl.text = '$body\n$result';
@@ -295,7 +299,7 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
             setState(() => _isAiAction = false);
             return;
           }
-          result = await AIService.polish(selectedText);
+          result = await EditorAiActions.polish(agent, selectedText);
           if (result != null && mounted) {
             _bodyCtrl.text = body.replaceRange(sel.start, sel.end, result);
             _bodyCtrl.selection = TextSelection.collapsed(offset: sel.start + result.length);
@@ -303,7 +307,7 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
           break;
         case '总结':
           final text = selectedText.isEmpty ? body : selectedText;
-          result = await AIService.summarize(text);
+          result = await EditorAiActions.summarize(agent, text);
           if (result != null && mounted) {
             // 总结插入到末尾
             final prefix = body.isEmpty ? '' : '\n\n## AI 总结\n$result';
@@ -566,7 +570,7 @@ class _DiaryEditorScreenState extends ConsumerState<DiaryEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      const Text('🤖', style: TextStyle(fontSize: 20)),
+                      const AiIcon(size: 20),
                       const SizedBox(width: AppSpacing.sm),
                       Text('DeepSeek AI 分析', style: Theme.of(context).textTheme.titleSmall),
                     ]),

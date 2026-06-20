@@ -5,6 +5,7 @@ import '../../core/theme/dimensions.dart';
 import '../../core/database/app_database.dart';
 import '../../core/network/ai_api_service.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/ai_icon.dart';
 import 'widgets/emotion_trend_chart.dart';
 
 /// 首页仪表盘
@@ -91,9 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 36, height: 36,
                       decoration: BoxDecoration(
                           color: cs.primary, borderRadius: BorderRadius.circular(AppRadius.sm)),
-                      child: Center(
-                          child: Text('AI',
-                              style: TextStyle(color: cs.onPrimary, fontSize: 14, fontWeight: FontWeight.w700))),
+                      child: const AiIcon(size: 18),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -128,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 36, height: 36,
                       decoration: BoxDecoration(
                           color: cs.secondaryContainer, borderRadius: BorderRadius.circular(AppRadius.sm)),
-                      child: Center(child: Text('🤖', style: TextStyle(fontSize: 18))),
+                      child: const AiIcon(size: 18),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -271,7 +270,7 @@ class _WeeklyReviewSheetState extends ConsumerState<_WeeklyReviewSheet> {
             )),
             const SizedBox(height: AppSpacing.lg),
             Row(children: [
-              const Text('🤖', style: TextStyle(fontSize: 24)),
+              const AiIcon(size: 24),
               const SizedBox(width: AppSpacing.sm),
               Text('本周回顾', style: Theme.of(context).textTheme.titleLarge),
             ]),
