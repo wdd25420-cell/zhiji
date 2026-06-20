@@ -256,9 +256,6 @@ class AgentService {
               case "search_knowledge":
                 yield const AgentStep(type: AgentStepType.searching, toolName: "search_knowledge");
                 break;
-              case "web_search":
-                yield const AgentStep(type: AgentStepType.webSearching, toolName: "web_search");
-                break;
               case "write_diary":
                 yield const AgentStep(type: AgentStepType.writing, toolName: "write_diary");
                 break;

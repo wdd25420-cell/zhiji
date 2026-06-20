@@ -7,7 +7,6 @@ import "package:zhiji/core/database/daos/diary_dao.dart";
 import "package:zhiji/core/utils/file_attachment_manager.dart";
 import "package:path/path.dart" as p;
 import "tool.dart";
-import "baidu_search.dart";
 
 // ---------------------------------------------------------------
 // Tool 1: search_knowledge
@@ -269,52 +268,3 @@ class ReadAttachmentTool extends AgentTool {
   }
 }
 
-
-// ---------------------------------------------------------------
-// Tool 7: web_search — 联网搜索（Bing API）
-// ---------------------------------------------------------------
-class WebSearchTool extends AgentTool {
-  final AppDatabase db;
-  WebSearchTool(this.db);
-
-  @override String get name => "web_search";
-  @override String get description => "联网搜索最新信息。";
-  @override Map<String, dynamic> get parameters => {
-    "type": "object",
-    "properties": {
-      "query": {"type": "string", "description": "搜索关键词"},
-      "count": {"type": "integer", "description": "返回结果数，默认5"},
-    },
-    "required": ["query"],
-  };
-
-  @override
-  Future<ToolResult> execute(ToolCall call) async {
-    try {
-      final query = call.arguments["query"] as String;
-      final count = (call.arguments["count"] as num?)?.toInt() ?? 5;
-
-      // 百度搜索，免费无限，无需 API Key
-      final result = await baiduSearch(query, count: count);
-
-      if (result.isError) {
-        return ToolResult.error(call.id, result.error ?? "搜索失败");
-      }
-      if (result.items.isEmpty) {
-        return ToolResult(toolCallId: call.id, content: "未找到相关结果");
-      }
-
-      final lines = <String>[];
-      for (var i = 0; i < result.items.length; i++) {
-        final item = result.items[i];
-        lines.add("${i + 1}. ${item.title}");
-        lines.add("   ${item.url}");
-        lines.add("   ${item.snippet}");
-      }
-      return ToolResult(toolCallId: call.id, content: lines.join("\n"));
-    } catch (e) {
-      debugPrint("[web_search] 异常: $e");
-      return ToolResult.error(call.id, "联网搜索暂不可用，请检查网络");
-    }
-  }
-}

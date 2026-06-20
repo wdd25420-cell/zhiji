@@ -31,6 +31,7 @@ class AIService {
       'temperature': temperature,
       'max_tokens': maxTokens,
       'stream': false,
+      'search': {'enabled': true}, // DeepSeek 内置联网搜索
     };
     if (tools != null) body['tools'] = tools;
 
@@ -49,7 +50,13 @@ class AIService {
         'finish_reason': choices[0]['finish_reason'] as String?,
       };
     } on DioException catch (e) {
-      debugPrint('AI chat request failed: ${e.type} ${e.message}');
+      final statusCode = e.response?.statusCode;
+      final responseBody = e.response?.data?.toString() ?? '';
+      debugPrint('AI chat request failed: ${e.type} HTTP$statusCode ${e.message}');
+      if (responseBody.isNotEmpty) {
+        debugPrint('AI response body: ${responseBody.length > 500 ? responseBody.substring(0, 500) : responseBody}');
+      }
+      // 返回带错误码的 null——调用方可根据 context 判断
       return null;
     } catch (e) {
       debugPrint('AI chat error: $e');
@@ -119,6 +126,7 @@ class AIService {
       'temperature': temperature,
       'max_tokens': maxTokens,
       'stream': true,
+      'search': {'enabled': true},
     };
 
     try {
