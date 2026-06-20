@@ -112,6 +112,13 @@ class AgentService {
 
       final toolCallsRaw = response["tool_calls"] as List?;
       if (toolCallsRaw != null && toolCallsRaw.isNotEmpty) {
+        // 先添加 assistant 消息（含 tool_calls），再添加 tool 结果
+        messages.add({
+          "role": "assistant",
+          "content": response["content"] ?? "",
+          "tool_calls": toolCallsRaw,
+        });
+
         for (final tcJson in toolCallsRaw) {
           final tc = ToolCall.fromJson(tcJson as Map<String, dynamic>);
 
@@ -141,12 +148,6 @@ class AgentService {
             "content": result.content,
           });
         }
-
-        messages.add({
-          "role": "assistant",
-          "content": response["content"],
-          "tool_calls": toolCallsRaw,
-        });
         continue;
       }
 
@@ -230,6 +231,13 @@ class AgentService {
 
         final toolCallsRaw = response["tool_calls"] as List?;
         if (toolCallsRaw != null && toolCallsRaw.isNotEmpty) {
+          // 先添加 assistant 消息（含 tool_calls），再添加 tool 结果
+          messages.add({
+            "role": "assistant",
+            "content": response["content"] ?? "",
+            "tool_calls": toolCallsRaw,
+          });
+
           for (final tcJson in toolCallsRaw) {
             final tc = ToolCall.fromJson(tcJson as Map<String, dynamic>);
 
@@ -277,12 +285,6 @@ class AgentService {
               "content": result.content,
             });
           }
-
-          messages.add({
-            "role": "assistant",
-            "content": response["content"],
-            "tool_calls": toolCallsRaw,
-          });
           continue;
         }
 

@@ -23,6 +23,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _apiKeyCtrl = TextEditingController();
+  final _bingKeyCtrl = TextEditingController();
   bool _aiEnabled = true;
 
   @override
@@ -35,10 +36,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final db = await ref.read(databaseProvider.future);
     final settingsDao = SettingsDao(db);
     final key = await settingsDao.getApiKey();
+    final bingKey = await settingsDao.getBingKey();
     final ai = await settingsDao.getValue('ai_enabled');
     if (mounted) {
       setState(() {
         if (key != null) _apiKeyCtrl.text = key;
+        if (bingKey != null) _bingKeyCtrl.text = bingKey;
         _aiEnabled = ai != 'false';
       });
     }
@@ -50,6 +53,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('✅ API Key 已保存')));
+    }
+  }
+
+  Future<void> _saveBingKey() async {
+    final db = await ref.read(databaseProvider.future);
+    await SettingsDao(db).setBingKey(_bingKeyCtrl.text.trim());
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('✅ Bing 搜索 Key 已保存')));
     }
   }
 
@@ -207,6 +219,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void dispose() {
     _apiKeyCtrl.dispose();
+    _bingKeyCtrl.dispose();
     super.dispose();
   }
 
@@ -235,6 +248,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: IconButton(
                       icon: const Icon(Icons.save_outlined), onPressed: _saveApiKey),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text('Bing 搜索 Key'),
+                  subtitle: TextField(
+                    controller: _bingKeyCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                        border: InputBorder.none, hintText: '输入 Bing API Key…', isDense: true),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  trailing: IconButton(
+                      icon: const Icon(Icons.save_outlined), onPressed: _saveBingKey),
+                ),
+                const Divider(height: 1),
                 SwitchListTile(
                   title: const Text('自动 AI 分析'),
                   subtitle: const Text('新建条目时自动分析'),
